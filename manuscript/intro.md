@@ -12,6 +12,13 @@ Podemos iniciar um projeto Laravel de duas maneira, a primeira é utilizando o L
 
 Vamos conhecer ambas as formas, relambrando que para ambas precisamos ter o composer em nossa máquina. Para isso instale o mesmo através do site [getcomposer.org](https://getcomposer.org).
 
+### Requirimentos
+
+Para termos sucesso na utilização do Laravel verique se seu PHP respeita as seguintes configurações:
+
+
+
+
 ### Laravel Installer (Windows)
 
 Com o composer em sua máquina Windows, vamos instalar o nosso utilitário, o Laravel Installer. Primeiramente abra seu prompt de comando, basta utilizar a combinação de teclas CTRL + R e na janelinha que aparecer digitar: cmd.
@@ -158,8 +165,45 @@ A vendo como conhecemos, é onde ficam os pacotes de terceiros dentro de nossa a
 
 ### Outros arquivos da raiz do projeto
 
+Temos ainda alguns arquivos na raiz do nosso projeto, como o `composer.json` e o `composer.lock` onde estão definidas as nossas dependêncas e as versões baixadas respectivamente.
+
+Temos também o `package.json` que contêm algumas definições de dependências do frontend. Temos também os arquivos de configuração para o webpack, pacote responsável por criar os builds do frontend.
+
+Temos ainda também o `server.php` que nos permite emular o mod_rewrite do apache.
+
+Temos também o `phpunit.xml` que contêm as configurações para nossa execução dos testes unitários, funcionais e etc em nossa aplicação.
+
+Deixe por último o arquivo `.env` que contêm as variavéis de ambiente para cada configuração de nossa aplicação como os parâmetros para conexão com o banco e também o aplication key hash único para nossa aplicação e outras configurações a mais além destas.
+
+Este arquivo e essas configurações são providas pelo pacote DotEnv do Vance Lucas.
+
+#Laravel: Artisan CLI
+
+O Laravel possui uma interface de comandos ou command line interface (CLI) chamada de `artisan`. Por meio dela podemos melhorar bastante nossa produtividade enquanto desenvolvemos como por exemplo: Gerar models, controllers, gerar a interface de autenticação e muitas outras opções que conheceremos ao longo do livro. Para conhecer todos os comando disponíveis no Artisan, basta executar na raiz do seu projeto o seguinte comando:
+
+`php artisan`
+
+Veja o resultado, a lista de comandos e opções disponíveis no cli:
 
 
+![](images/project/3.png)
 
+
+# Executando a Aplicação
+
+Para concluirmos nosso primeiro capítulo, vamos iniciar nossa aplicação e testá-la em nosso browser. Para isso acesse o seu projeto via terminal ou cmd no Windows e na raiz execute o comando abaixo:
+
+
+`php artisan serve`
+
+
+![](images/project/4.png)
+
+
+O comando acima levantará sua aplicação em seu ip local `127.0.0.1` e disponibilizará a porta `8000` para que você possa acessar sua aplicação no browser. Agora vamos acessar em nosso browser o seguinte link: `http://127.0.0.1:8000`:
+
+![](images/project/5.png)
+
+Se tudo estiver corretamente configurado teremos o resultado acima, a tela inicial do nosso projeto Laravel ainda com coisas default do framework.
 
 
