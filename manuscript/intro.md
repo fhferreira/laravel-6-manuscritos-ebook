@@ -197,7 +197,7 @@ Deixe por último o arquivo `.env` que contêm as variavéis de ambiente para ca
 
 Este arquivo e essas configurações são providas pelo pacote DotEnv do Vance Lucas.
 
-#Laravel: Artisan CLI
+## Laravel: Artisan CLI
 
 O Laravel possui uma interface de comandos ou command line interface (CLI) chamada de `artisan`. Por meio dela podemos melhorar bastante nossa produtividade enquanto desenvolvemos como por exemplo: Gerar models, controllers, gerar a interface de autenticação e muitas outras opções que conheceremos ao longo do livro. Para conhecer todos os comando disponíveis no Artisan, basta executar na raiz do seu projeto o seguinte comando:
 
@@ -209,7 +209,7 @@ Veja o resultado, a lista de comandos e opções disponíveis no cli:
 ![](images/project/3.png)
 
 
-# Executando a Aplicação
+## Executando a Aplicação
 
 Para concluirmos nosso primeiro capítulo, vamos iniciar nossa aplicação e testá-la em nosso browser. Para isso acesse o seu projeto via terminal ou cmd no Windows e na raiz execute o comando abaixo:
 
@@ -226,7 +226,7 @@ O comando acima levantará sua aplicação em seu ip local `127.0.0.1` e disponi
 
 Se tudo estiver corretamente configurado teremos o resultado acima, a tela inicial do nosso projeto Laravel, e sua página inicial default.
 
-# Conclusões
+## Conclusões
 
 Bom neste módulos concluimos aqui as configurações e realizamos o inicio do nosso primeiro projeto utilizando o framework. Agora vamos continuar para o próximo capítulo e começar a entender a estrutura geral do framework por meio da criação do nosso Hello World utilizando o framework.
 
