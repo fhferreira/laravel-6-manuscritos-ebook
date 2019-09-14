@@ -49,7 +49,7 @@ Com o prompt aberto, digite e execute o comando abaixo:
 
     composer global require "laravel/installer"
 
-![](images/l-installer/1.png)
+![](images/l-installer/1.jpg)
 
 Com isso o composer vai baixar o pacote laravel/installer e jogar na pasta abaixo, dentro de vendor & também dentro de bin, que está dentro de vendor, ambas estão no caminho abaixo:
 
@@ -57,11 +57,11 @@ Com isso o composer vai baixar o pacote laravel/installer e jogar na pasta abaix
 
 Veja o resultado da instalação abaixo:
 
-![](images/l-installer/2.png)
+![](images/l-installer/2.jpg)
 
 Feito isso, precisamos adicionar o caminho dos binários globais do composer no PATH do Windows. Primeiramente acesse o menu propriedades do Meu Computador, como mostrado abaixo:
 
-![](images/l-installer/3.png)
+![](images/l-installer/3.jpg)
 
 Após isso, acesse o menu Configurações Avançadas do Sistema, no menu lateral esquerdo da sua tela. Veja abaixo:
 
@@ -70,14 +70,14 @@ Após isso, acesse o menu Configurações Avançadas do Sistema, no menu lateral
 Na tela que aparecer, na parte inferior, acesse o menu Variáveis de Ambiente*.
 
 
-![](images/l-installer/5.png)
+![](images/l-installer/5.jpg)
 
 Se você está em um ambiente com Windows 10, pode ser que a tela a seguir mude um pouco. Na verdade fica mais simples de adicionar um caminho ao PATH do Windows 8 pra frente.
 
 Na janela de Variáveis de Ambiente, na parte inferior, procure por Path e clique em editar. Como mostro abaixo:
 
 
-![](images/l-installer/6.png)
+![](images/l-installer/6.jpg)
 
 Na janelinha que aparecer, modifique o valor da variável. Neste caso apenas adicione ao final da linha o caminho abaixo substituindo o <seu_nome_de_usuario> por seu nome de usuário no sistema:
 
@@ -91,7 +91,7 @@ Após isso, dê OK até sair de todas as janelas. Se seu prompt continuou aberto
 
 Para verificar se o laravel installer é reconhecido, execute em seu cmd o comando: laravel e obtenha o resultado abaixo:
 
-![](images/l-installer/7.png)
+![](images/l-installer/7.jpg)
 
 Agora estamos aptos a iniciarmos um projeto Laravel por meio do Laravel Installer em nosso CMD.
 
