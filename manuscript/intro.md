@@ -30,13 +30,13 @@ Para verificar sua versão do PHP de forma rápida basta acessar seu terminal ou
 
 `php -v` 
 
-![](./images/req-1.png)
+![](resources/./images/req-1.png)
 
 Para visualizar suas extensões execute em seu terminal o comand abaixo:
 
 `php -m`
 
-![](./images/req-2.png)
+![](resources/./images/req-2.png)
 
 
 ### Laravel Installer (Windows)
@@ -49,7 +49,7 @@ Com o prompt aberto, digite e execute o comando abaixo:
 
     composer global require "laravel/installer"
 
-![](images/installer-1.jpg)
+![](resources/images/installer-1.jpg)
 
 Com isso o composer vai baixar o pacote laravel/installer e jogar na pasta abaixo, dentro de vendor & também dentro de bin, que está dentro de vendor, ambas estão no caminho abaixo:
 
@@ -57,27 +57,27 @@ Com isso o composer vai baixar o pacote laravel/installer e jogar na pasta abaix
 
 Veja o resultado da instalação abaixo:
 
-![](./images/installer-2.jpg)
+![](resources/./images/installer-2.jpg)
 
 Feito isso, precisamos adicionar o caminho dos binários globais do composer no PATH do Windows. Primeiramente acesse o menu propriedades do Meu Computador, como mostrado abaixo:
 
-![](./images/installer-3.jpg)
+![](resources/./images/installer-3.jpg)
 
 Após isso, acesse o menu Configurações Avançadas do Sistema, no menu lateral esquerdo da sua tela. Veja abaixo:
 
-![](./images/installer-4.png)
+![](resources/./images/installer-4.jpg)
 
 Na tela que aparecer, na parte inferior, acesse o menu Variáveis de Ambiente*.
 
 
-![](./images/installer-5.jpg)
+![](resources/./images/installer-5.jpg)
 
 Se você está em um ambiente com Windows 10, pode ser que a tela a seguir mude um pouco. Na verdade fica mais simples de adicionar um caminho ao PATH do Windows 8 pra frente.
 
 Na janela de Variáveis de Ambiente, na parte inferior, procure por Path e clique em editar. Como mostro abaixo:
 
 
-![](./images/installer-6.jpg)
+![](resources/./images/installer-6.jpg)
 
 Na janelinha que aparecer, modifique o valor da variável. Neste caso apenas adicione ao final da linha o caminho abaixo substituindo o <seu_nome_de_usuario> por seu nome de usuário no sistema:
 
@@ -91,7 +91,7 @@ Após isso, dê OK até sair de todas as janelas. Se seu prompt continuou aberto
 
 Para verificar se o laravel installer é reconhecido, execute em seu cmd o comando: laravel e obtenha o resultado abaixo:
 
-![](./images/installer-7.jpg)
+![](resources/./images/installer-7.jpg)
 
 Agora estamos aptos a iniciarmos um projeto Laravel por meio do Laravel Installer em nosso CMD.
 
@@ -110,7 +110,7 @@ Ao abrir o arquivo correspondente, adicione a seguinte linha ao final do arquivo
 Após isso reinicie seu terminal e execute o comando laravel, e obtenha o resultado abaixo:
 
 
-![](./images/installer-8.jpg)
+![](resources/./images/installer-8.jpg)
 
 ## Iniciando Primeiro Projeto
 
@@ -133,13 +133,13 @@ Podemos iniciar nosso projeto por meio do laravel installer também então para 
 
 Com isso o instaldor baixará todo o skeleton do Laravel e instalará as dependências do nosso projeto automaticamente e jogará dentro da pasta `blog`.
 
-![](./images/project-1.png)
+![](resources/./images/project-1.png)
 
 ## Conhecendo a estrutura do Laravel
 
 Vamos conhecer as pastas e os arquivos que fazem parte da estrutura do nosso projeto:
 
-![](./images/project-2.png)
+![](resources/./images/project-2.png)
 
 O Laravel possui algumas pastas base como a pasta `app`, `bootstrap`, `database`, `config`, `public`, `resources`, `storage`, `routes`, `tests` e a `vendor`. Vamos ver o que cada pasta destas representa ou aramazena em sua estrutura.
 
@@ -206,7 +206,7 @@ O Laravel possui uma interface de comandos ou command line interface (CLI) chama
 Veja o resultado, a lista de comandos e opções disponíveis no cli:
 
 
-![](./images/project-3.png)
+![](resources/./images/project-3.png)
 
 
 ## Executando a Aplicação
@@ -217,12 +217,12 @@ Para concluirmos nosso primeiro capítulo, vamos iniciar nossa aplicação e tes
 `php artisan serve`
 
 
-![](./images/project-4.png)
+![](resources/./images/project-4.png)
 
 
 O comando acima levantará sua aplicação em seu ip local `127.0.0.1` e disponibilizará a porta `8000` para que você possa acessar sua aplicação no browser. Agora vamos acessar em nosso browser o seguinte link: `http://127.0.0.1:8000`:
 
-![](./images/project-5.png)
+![](resources/./images/project-5.png)
 
 Se tudo estiver corretamente configurado teremos o resultado acima, a tela inicial do nosso projeto Laravel, e sua página inicial default.
 
