@@ -16,7 +16,27 @@ Vamos conhecer ambas as formas, relambrando que para ambas precisamos ter o comp
 
 Para termos sucesso na utilização do Laravel verique se seu PHP respeita as seguintes configurações:
 
+- PHP maior ou igual ao 7.2;
+- Extensão BCMath 
+- Extensão Ctype
+- Extensão JSON
+- Extensão Mbstring
+- Extensão OpenSSL
+- Extensão PDO
+- Extensão Tokenizer
+- Extensão XML
 
+Para verificar sua versão do PHP de forma rápida basta acessar seu terminal ou cmd(tenha certeza que o PHP está no PATH do Windows) e execute o comando abaixo:
+
+`php -v` 
+
+![](images/req/1.png)
+
+Para visualizar suas extensões execute em seu terminal o comand abaixo:
+
+`php -m`
+
+![](images/req/2.png)
 
 
 ### Laravel Installer (Windows)
@@ -204,6 +224,11 @@ O comando acima levantará sua aplicação em seu ip local `127.0.0.1` e disponi
 
 ![](images/project/5.png)
 
-Se tudo estiver corretamente configurado teremos o resultado acima, a tela inicial do nosso projeto Laravel ainda com coisas default do framework.
+Se tudo estiver corretamente configurado teremos o resultado acima, a tela inicial do nosso projeto Laravel, e sua página inicial default.
+
+# Conclusões
+
+Bom neste módulos concluimos aqui as configurações e realizamos o inicio do nosso primeiro projeto utilizando o framework. Agora vamos continuar para o próximo capítulo e começar a entender a estrutura geral do framework por meio da criação do nosso Hello World utilizando o framework.
+
 
 
