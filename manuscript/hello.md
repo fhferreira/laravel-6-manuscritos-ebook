@@ -30,7 +30,7 @@ A camada de view ou visualização é a camada de interação do usuário. Onde 
 
 No Laravel nos armazenaremos nossas views na pasta `resources/views/` e utilizaremos o template engine, que falarei sobre ele mais a frente, chamado de Blade.
 
-## Roteiro para o Hello World
+## Roteiro para nosso primeiro Hello World
 
 
 Para criamos nosso hello world, precisaremos seguir os passos abaixo para este momento:
@@ -153,3 +153,12 @@ E teremos nosso Hello World em nossa tela!
 
 ## Conclusões
 
+Neste módulo vimos diretamente o processo de expor uma rota para acesso, a execução de nosso controller através do método index, bem como, a exibição do resultado em uma view onde mostramos o nosso primeiro Hello World com o framework!
+
+É claro que cada etapa destas carece de um pouco mais de informações e também é claro que cada etapa destas contêm diversos detalhes que será necessário que conheçamos para termos um melhor proveito do framework.
+
+A partir de agora iremos debsravar a fundo toda estas opções e outros que não foram diretamente mostradas aqui.
+
+Este capítulo serviu para te mostrar um panorama geral que será utilizado no decorrer de sua caminhada com o framework durante o desenvolvimento de suas aplicações.
+
+Então vamos lá, vamos continuar nossa jornada!
