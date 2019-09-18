@@ -53,11 +53,43 @@ Um primeiro ponto que podemos abordar sobre os métodos do `Route`, como vimos o
 - GET;
 - POST;
 - PUT;
+- PATCH;
 - DELETE;
 - OPTIONS;
-- HEAD;
 
-Podemos usar os métodos conforme os verbos http mostrados acima, tendo sempre o primeiro parâmetro, a rota em si, e o segundo parâmetro o callable ou executável para esta rota ao ser acessada.
+Podendo utilizá-los da seguinte maneira:
+
+- Route::get($route, $callback);
+- Route::post($route, $callback);
+- Route::put($route, $callback);
+- Route::patch($route, $callback);
+- Route::delete($route, $callback);
+- Route::options($route, $callback);
+
+Podemos usar os métodos conforme os verbos http mostrados, tendo sempre o primeiro parâmetro, a rota em si, e o segundo parâmetro o callable ou executável para esta rota ao ser acessada.
+
+### Route match e Route any
+
+Se precisarmos usar uma rota que responda a determinados tipos de verbos http, podemos usar o método `match` do `Route`. Como abaixo:
+
+```
+
+Route::match(['get', 'post'], 'posts/create', function(){
+	return 'Esta rota bate com o verbo GET e POST';
+});
+
+```
+
+Caso queira que uma rota responda para todos os verbos ao mesmo tempo, você pode usar o método `any` do `Route`:
+
+```
+
+Route::any('posts', function(){
+	return 'Esta rota bate com todos os verbos HTTP mencionados anteriormente';
+});
+
+```
+
 
 ### Parâmetros dinâmicos 
 
@@ -95,8 +127,143 @@ Vamos pegar nossa última rota do parâmetro dinâmico:
 Route::get('/post/{slug}', function($slug) {
     return $slug;
 })
-->name('post_single');
+->name('post.single');
 
 ```
 
 Perceba a adição simples que fiz após o método `get` antes de fechar com o `;`. Chamei o método `name` que me permite adicionar um apelido para a rota em questão, neste caso agora posso chamar o apelido `post_single` toda vez que eu precisar usar a rota `post/{slug}`. 
+
+Em um link em nossa view ao invés de usarmos desta maneira:
+
+```
+<a href="/post/primeiro-post">Primeiro Post</a>
+```
+
+Vamos utilizar desta maneira:
+
+```
+<a href="{{route('post.single', ['slug' => 'primeiro-post'])}}">Primeiro Post</a>
+```
+
+Perceba acima que estamos em uma suposta view e utilizamos um método helper do Blade que é o `route` em nosso atributo href da âncora. O primeiro parâmetro do `route` é o apelido da rota e se a rota tiver parâmetros dinâmicos, que é o nosso caso, agente informa isso dentro de um array no segundo parâmetro informando o nome do parâmetro e o valor para este parâmero.
+
+O método route irá gerar a url correta informando o parâmetro dinâmico no local correto. Com isso fica mais simples se precisarmos futuramente modificar o nome real da rota por esta questão, de chamarmos a rota pelo apelido ao invés de seu nome real.
+
+### Grupo de Rotas & Prefixo
+
+Podemos definir determinadas configurações para um grupo especifico de rotas, para conhecermos o poder do group decidir mostrar ele aqui com a definição de um prefixo, método existente no Route também.
+
+Vamos ao código abaixo:
+
+```
+
+Route::prefix('posts')->group(function(){
+
+    Route::get('/', 'PostController@index')->name('posts.index');
+    
+    Route::get('/create', 'PostController@create')->name('posts.create');
+    
+    Route::post('/save', 'PostController@save')->name('posts.save');
+
+});
+
+```
+
+Perceba no set de rotas acima que utilizei incialmente o método `prefix` e me utilizei do método `group` para definir esse prefixo para um grupo de rotas especifico. Esse grupo de rotas é adicionado dentro do método `group` por meio de uma função anônima.
+
+Agora, as rotas dentro do group serão prefixadas com o `posts`, ficando desta maneira:
+
+- **/posts/**;
+- **/posts/create**;
+- **/posts/save**.
+
+Duas rotas acessivéis via GET e uma acessível via POST. 
+
+O grupo nos permite esse tipo de configuração, quando precisamos organizar melhor determinadas configurações que se repetirão para mais de um set de rota. Isso melhora até a escrita dos nossos arquivos de rotas e definições.
+
+### Grupo de Rotas & Apelidos
+
+Vamos melhorar ainda mais nosso set de rotas do momento passado. Podemos, também, definir um apelido base para um grupo de rotas então vamos melhorar nosso grupo anterior.
+
+Veja como ficou:
+
+```
+
+Route::prefix('posts')->name('posts.')->group(function(){
+
+    Route::get('/', 'PostController@index')->name('index');
+    
+    Route::get('/create', 'PostController@create')->name('create');
+    
+    Route::post('/save', 'PostController@save')->name('save');
+
+});
+
+```
+
+Perceba que agora isolei a parte `posts.` referente ao apelido das rotas após a definição do prefixo. Agora as rotas deste grupo além de receber um prefixo irá receber um apelido base que será concatenado com os apelidos de cada rota do grupo.
+
+Os apelidos ficarão desta forma:
+
+- **posts.index**;
+- **posts.create**;
+- **posts.save**.
+
+Esses serão os apelidos da rota gerados, o mesmo que seria anteriormente mas agora com o detalhe de termos organizado e isolado o que era repetido, ou seja, o  `posts.`.
+
+### Grupo de Rotas & Namespaces
+
+O namespace base do Laravel é `App`, e o namespace base dos controllers é `App\Http\Controllers`. Esse namespace é adicionado automaticamente pelo Laravel quando chamamos uma rota referenciando um método de um Controller mas podem existir casos em que você queira criar mais um nível de namespace para um determinado grupo de controllers dentro de sua aplicação.
+
+Por exemplo, podemos ter controllers especificos de um painel administrativo. Suponhamos que temos dentro da pasta controllers uma pasta `Admin` (que também representará mais um nivel de namespace) e dentro desta pasta `Admin` temos um `PostController`, um `UserController` ambos referentes ao gerenciamento de posts e usuários de nosso painel administrativo.
+
+Como podemos referir o namespace `Admin` durante o set de rotas?
+
+Vejamos as duas rotas abaixo:
+
+```
+Route::get('admin/users/', 'Admin\\UserController@index')->name('users.index');
+
+
+Route::get('admin/posts/', 'Admin\\PostController@index')->name('posts.index');
+
+```
+
+Perceba como eu informei o namespace extra, `Admin`, nas duas rotas acima que supostamente levam para a listagem de usuários e posts dentro do nosso admin.
+
+Perceba que temos repetições nas duas rotas, vamos nos focar em organizar o namespace inicialmente.
+
+Organizando o namespace por grupos podemos chegar no resultado abaixo:
+
+```
+Route::namespace('Admin')->group(function(){
+
+    Route::get('admin/users/', 'UserController@index')->name('users.index');
+
+
+    Route::get('admin/posts/', 'PostController@index')->name('posts.index');
+
+});
+
+```
+
+Agora isolamos o namespace através do método do `Route` chamado `namespace` e todas as rotas deste grupo irão receber este namespace. 
+
+Podemos ainda organizar os prefixos perceba a repetição do `admin` nos nomes reais das rotas. Organizando fica assim:
+
+```
+Route::namespace('Admin')->prefix('admin')->group(function(){
+
+    Route::get('/users/', 'UserController@index')->name('users.index');
+
+
+    Route::get('/posts/', 'PostController@index')->name('posts.index');
+
+});
+
+```
+Agora as coisas começam a ficar mais organizadas. Podemos organizar e agrupar nossas rotas conforme nossa necessidade, então, sempre que estiver escrevendo suas rotas analise o que pode ser organizado usando o método `group` e as opções disponiveis para as configurações em questão.
+
+## Controllers
+
+
