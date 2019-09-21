@@ -1,3 +1,5 @@
+{sample: true}
+
 # Laravel 6
 
 Laravel é um fullstack framework criado por Taylor Otwell. O Laravel foi criado em Junho de 2011 e de lá pra cá vêm ganhando muita notoriedade por meio de suas features e facilidades quando tratamos da criação de aplicações web e diversos serviços e softwares.

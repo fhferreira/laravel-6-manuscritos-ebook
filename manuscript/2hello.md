@@ -1,3 +1,5 @@
+{sample: true}
+
 # Hello World com Laravel
 
 Este capítulo visa mostrar o Laravel de uma forma geral, o que definirá nosso fluxo de trabalho durante todo o desenvolvimento. Gosto muito de tomar uma abordagem prática, por isso, vamos trabalhar todos os conceitos envolvendo o framework em cima de um projeto prático e direto ao ponto.
