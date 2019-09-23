@@ -362,5 +362,370 @@ Comando que já conhecemos e que vai executar a última migração criada porque
 
 ![](resources/./images/migracao-chave-estrangeira.png)
 
+Agora já temos nossa tabela para salvar nossas postagens e também nossa referência para criação do autor da postagem em questão. Sobre migrations, por enquanto, ficaremos por aqui. É claro que ainda veremos bastante elas aqui no livro mas por hora já tivemos um excelente conhecimento a respeito de sua utilização. Agora vamos conhecer mais dois caras que nos auxiliam no momento do nosso desenvolvimento e banco de dados.
+
+Os **seeds** e as **factories**.
+
+## Seeds
+
+Quando estamos em nosso ambiente de desenvolvimento nós precisaremos criar dados no banco para teste de nossas lógicas, os seeds nos permite este trabalho. Podemos por meio das seeds alimentar nosso banco de dados com informações para que possamos testar nossos CRUDs por exemplo.
+
+Você pode encontrar os seeds do sistema dentro da pasta `database/seeds`, dentro desta pasta você vai encontrar o arquivo `DatabaseSeeder.php` que é o arquivo principal que executa todas as outras seeds que tivermos nesta pasta. Perceba que temos seu conteúdo mostrado abaixo:
+
+```
+<?php
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        // $this->call(UsersTableSeeder::class);
+    }
+}
+
+```
+
+Perceba a linha comentada, que contêm a chamada para um arquivo de seed que ainda não exite mas já nos mostra como podemos registrar os arquivos e seed para serem executados, ou seja, por meio do método `call` e informando a classe de seed em questão. Vamos criar dois arquivos de seed para este momento, primeiro o arquivo que já temos mencionado acima, o `UsersTableSeeder` e também vamos criar o `PostsTableSeeder`. 
+
+Ta! Mas como podemos criar isso? Eu te mostra, é bem simples!
+
+Exeute os comandos abaixo, primeiro executando a geração de um, depois do outro:
+
+```
+php artisan make:seeder UsersTableSeeder
+```
+
+Após a execução acima, execute a criação do outro arquivo seeder:
+
+```
+php artisan make:seeder PostsTableSeeder
+```
+
+Veja o resultado:
+
+![](resources/./images/criando-seeds.png)
+
+Após a criação, veja que temos dois arquivos criados dentr da pasta de seeds, o `UsersTableSeeder.php` e também o `PostsTableSeeder.php`. Agora o que faremos com eles?
+
+Podemos utilizar ambos os arquivos de seed para gerarmos 1 usuário e 1 postagem para nossa base. Como podemos fazer isso?
+
+Abra o arquivo `UsersTableSeeder.php` e adicione o código abaixo no método `run`:
+
+```
+\DB::table('users')->insert([
+    'name'     => 'Primeiro Usuário',
+    'email'    => 'email@email.com',
+    'password' => bcrypt('secret')
+]);   
+```
+Perceba que acima temos o primeiro contato com o objeto `DB` que nos permite realizarmos a execução de queries SQL no mais baixo nível em relação a parte do ORM que veremos mais a frente. Então informo a tabela que quero realizar a inserção do dado, por meio do método `table` e logo após aninhado chamo o método `insert` informando um array respeitando as colunas que quero adicionar valor e seus valores em questão.
+
+Perceba que no campo de senha do usuário utilizo o helper bcrypt para encryptar a senha do nosso usuário.
+
+Após isso adicione o conteúdo do método `run` do `PostsTableSeeder`:
+
+```
+\DB::table('posts')->insert([
+    'title'       => 'Primeira Postagem',
+    'description' => 'Postagem teste com seeds',
+    'content'     => 'Conteúdo da postagem',
+    'is_active'   => 1,
+    'slug'        => 'primeira-postagem',
+    'user_id'     => 1
+]);
+```
+Acima temos o mesmo pensamento com a diferença que estamos lidando com posts e respeitando o nome da tabela e os campos. Perceba também que referenciei o `user_id` como 1, isso é pouco chate de se fazer assim mas neste caso se encaixa tranquilamente, uma vez que vamos executar a seed de users na ordem antes de posts e assim teremos o usuário com id 1 para satisfazer com o `user_id` do posta criado acima.
+
+Agora vamos volta lá no DatabaseSeeder e descomentar a linha que temos definida e adicionar mais uma para a chamada do `PostsTableSeeder`. O conteúdo do arquivo `DatabaseSeeder` ficará assim, veja ele todo na íntegra abaixo:
+
+```
+<?php
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        $this->call(UsersTableSeeder::class);
+        $this->call(PostsTableSeeder::class);
+    }
+}
+
+```
+
+Temos a chamada descomentada do `UsersTableSeeder` e adicionamos a chamada para o `PostsTableSeeder`. Este passo feito vamos ao terminal e conhecer mais comando, desta vez para execução dos nossos seeds.
+
+Em seu terminal e na raiz do projeto execute o comando abaixo:
+
+```
+php artisan db:seed
+```
+
+Veja o resultado:
+
+![](resources/./images/excutando-seeds.png)
+
+Se você for ao seu banco e consultar as tabelas verá que tens os dados lá como definimos nas classes de seed. 
+
+Se precisarmos de mais dados, como por exemplo, inserir 30 posts de primeira por meio dos seeds teriamos um trabalho animal mas este trabalho se simplifica por meio do que chamamos de Model Factories. Então vamos crescer mais dentro do Laravel conhecendo mais este conceito/ferramenta que nos auxilia neste camada/etapa do desenvolvimento.
+
+## Factories
+
+Quando precisamos realizar a geração de muitos dados de forma mais automatizada podemo usar as Factories ou Model Factories. Vamos conhecer por meio da execução desta ferramenta.
+
+Aqui de certa forma teremos algum conteúdo sobre models mas não vou me ater a elas (Models) no momento, pois o próximo capítulo será sobre esta camada e o tratamento com banco de dados. Como precisamos de models para geração automatizada de dados para nossa aplicação vou começar primeiramente com o model que já temos em nossa aplicação, o model Users.
+
+As factories definem as regras, com base no model escolhido e conforme a quantidade especificada, para criação de dados ficticios em nossas tabelas. No fim das contas chamados de factories ou fábricas por serem essas definições e junto com os seeds realizamos as gerações esperadas. Você pode encontrar os arquivos de factories na pasta `database/factories`.
+
+
+Nesta pasta já temos um arquivo de factory, o `UserFactory.php`. Veja o conteúdo dele abaixo:
+
+```
+<?php
+
+/** @var \Illuminate\Database\Eloquent\Factory $factory */
+use App\User;
+use Faker\Generator as Faker;
+use Illuminate\Support\Str;
+
+/*
+|--------------------------------------------------------------------------
+| Model Factories
+|--------------------------------------------------------------------------
+|
+| This directory should contain each of the model factory definitions for
+| your application. Factories provide a convenient way to generate new
+| model instances for testing / seeding your application's database.
+|
+*/
+
+$factory->define(User::class, function (Faker $faker) {
+    return [
+        'name' => $faker->name,
+        'email' => $faker->unique()->safeEmail,
+        'email_verified_at' => now(),
+        'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+        'remember_token' => Str::random(10),
+    ];
+});
+
+```
+
+Perceba acima que temos a definição para criação de usuários, um código diretamente definido sem um wrapper (Objeto ou coisa assim). Um ponto importante aqui nesta definição é a utilização do pacote Faker que nos permite gerarmos dados aleatórios dos mais variados, como nomes fakes, emails, conteúdos de textos, valores decimais e muito mais. Vale ressaltar que o pacotes Faker é uma lib a parte mas que o Laravel se utiliza para facilitar esse esboço para criação de dados fictícios para teste de nossas aplicações.
+
+Veja que a estrutura quase que se assemelha ao que fizemos no seed no que se refere a dizermos as colunas referentes a tabela User, e para o que colocamos na mão para o dado a ser salvo, aqui usamos o Faker para gerarmos nomes fakes, emails fakes únicos. Agora, relembrando, aqui temos um esboço mas e como executar esta geração?
+
+Vamos ver a seguir.
+
+## Model Factories com Seeds
+
+Como comentado vamos executar nossa inserção de dados utilizando o dado esboçado pela factory para User. Como o título do trecho diz, precisamos combinar a geração dos dados, utilizando a factory, junto com a execução via seeds. Agora, vamos alterar nosso UsersTableSeeder para utilizar as factories.
+
+Comente o conteúdo do método `run` do UsersTableSeeder e adicione a chamada abaixo:
+
+```
+factory(\App\User::class, 10)->create();
+```
+
+Ao invés de usarmos o objeto `DB`, como fizemos, chamamos o helper `factory` informando o model para o qual queremos gerar e passando um segundo parâmetro informamos a quantidade de dados que queremos inserir. Com isso chamamos o método `create` para execução dos dados e criação de 10 usuários aleatórios e com dados fakes. 
+
+Depois desta definição na classe `UsersTableSeeder` vamos ao terminal e vamos rodar somente o seed para a classe de seed de users. Para isto execute o comando abaixo:
+
+```
+php artisan db:seed --class=UsersTableSeeder
+```
+
+Resultado:
+
+![](resources/./images/users-seeder.png)
+
+Acima conhecemos mais uma possibilidade dos seeds, podemos executar seeds especificando a classe que queremos executar em nosso caso apenas o conteúdo do UsersTableSeeder informando o parâmetro `--class` e o nome da classe. Se você for ao seu banco, além do dado que você inseriu no momento do seed você verá mais 10 registros que foram gerados neste último comando por meio da execução da factory chamando a execução dos seeds. Perceba que simplifica bastante nossas vidas, pois se quisermos mais dados fakes basta deinimos a quantidade no parâmetro do helper factory ou até mesmo ficar executando os seeds várias vezes.
+
+## Nossa primeira factory
+
+Vamos fazer um trabalho agora, criando uma factory do zero até sua execução por meio do ou em combinação com os seeds. Para criarmos nossa primeira factory, acesse seu terminal e execute o comando abaixo:
+
+```
+php artisan make:factory PostFactory
+```
+
+Você poderá encontrar a factory criada na pasta em questão. Abra ela e vamos as definições para esta factory. Inicialmente temos o código na ítegra abaixo sem alterações:
+
+```
+<?php
+
+/** @var \Illuminate\Database\Eloquent\Factory $factory */
+
+use App\Model;
+use Faker\Generator as Faker;
+
+$factory->define(Model::class, function (Faker $faker) {
+    return [
+        //
+    ];
+});
+
+```
+
+Primeira coisa que precisamos definir é o model Post entretanto não temos este model ainda, isso não é problema pro momento. Vamos ao terminal e vamos gerar nosso primeiro Model:
+
+```
+php artisan make:model Post
+```
+
+![](resources/./images/primeiro-model.png)
+
+Após a execução do comando acima, você poderá encontrar seu primeiro model gerado na pasta `app`. Como comentei estamos tendo aqui neste trecho nossos primeiros contatos com os models mas não vamos adentrar ainda neles, vamos nos focar em sua relação com as factories para geração de dados fakes.
+
+Agora que temos nosso model Post gerado, podemos alterar a definição da factory, que esta assim:
+
+
+```
+$factory->define(Model::class, ...
+```
+
+para
+
+```
+$factory->define(\App\Post::class, ...
+```
+
+Agora precisamos definir dentro da função anônima, por meio do Faker, nossos dados falsos para futuras gerações de postagens para testes de nossa aplicação. Vamos as definições abaixo:
+
+```
+return [
+       'title'       => $faker->words(4, true),
+	    'description' => $faker->sentence,
+	    'content'     => $faker->paragraphs(9, true),
+	    'slug'        => $faker->slug,
+	    'is_active'   => $faker->boolean,
+	    'user_id'     => rand(1, 10)
+    ];
+```
+
+Acima temos o array de retorno do nosso callback, vamos entender cada definição fake acima:
+
+- words(4, true) : estou definindo 4 palavras pro título e essa geração têm que ser em texto por isto o true como segundo parâmetro;
+- setence: gero aqui uma setença de texto para a descrição do post;
+- paragraphs(9, true): este é mais intuitivo, espero gerar 9 parágrafos como texto, por isso o segundo parâmetro como true, caso false ele retorna um array com os parágrafos.
+- slug: temos defnições especifícas para slug;
+- boolean: e definições aleatórias para true ou false;
+- por fim, no `user_id` usei o rand do PHP para pegar um inteiro aleatório entre 1 e 10 pensando nos 10 usuários gerados com faker anteriormente.
+
+Obs.: Sobre essa referência ao `user_id` podemos realizar criações mais organizadas e menos adivinhatórias mas ainda não chegamos neste conhecimento. Não se preocupe que terei o cuidado de mencionar o conhecimento quando chegarmos nele e inclusive vamos voltar e melhorar nossas factories no momento de suas gerações.
+
+Com isto definido, veja o conteúdo na íntegra do PostFactory antes de chamarmos em nosso PostsTableSeeder:
+
+```
+<?php
+
+/** @var \Illuminate\Database\Eloquent\Factory $factory */
+
+use App\Model;
+use Faker\Generator as Faker;
+
+$factory->define(\App\Post::class, function (Faker $faker) {
+    return [
+        'title'       => $faker->words(4, true),
+	    'description' => $faker->sentence,
+	    'content'     => $faker->paragraphs(9, true),
+	    'slug'        => $faker->slug,
+	    'is_active'   => $faker->boolean,
+	    'user_id'     => rand(1, 10)
+    ];
+});
+
+``` 
+
+Agora vamos adicionar a chamada para execução dentro do nosso PostsTableSeeder, comente o `DB` insert usado anteriormente e adicione ao método `run` o trecho abaixo:
+
+```
+factory(\App\Post::class, 30)->create();
+```
+
+Agora quando rodarmos nosso seed para posts, vamos gerar 30 postagens fakes. Vamos executar então, em seu terminal rode o comando abaixo:
+
+```
+php artisan db:seed --class=PostsTableSeeder
+```
+
+![](resources/./images/executando-posts-table-seeder-fac.png)
+
+Agora temos, 31 postagens por conta das 30 usando factories e da 1 utilizando o objeto DB. É muito simples gerarmos dados fakes usando essa combinação, definição por meio das factories e execução das factories por meio dos seeds.
+
+Antes de concluirmos este capítulo, quero mostrar sobre migrations alguns passos para realizarmos o caminho reversão a criação das tabelas. Execuções pro caso de queremos limpar nossas tabelas por meio das migrations, limpar e re-criar usando ainda os seeds junto esse pontos que vão nos auxiliar mais ainda nesta etapad de desenvolvimento. 
+
+Vamos lá!
+
+## Migrations! Revertendo coisas!
+
+Agora que já conhecemos como criar tabelas e como alimentá-las com dados falsos para nosso desenvolvimento vamos entender como podemos reverter as coisas quando tratamos das migrações e suas criações.
+
+Primeramente caso precisemos voltar o último lote de migrações executados, por usar o comando abaixo:
+
+```
+php artisan migrate:rollback
+```
+
+O comando acima, como comentado, desfará tudo que as migrações do último lote de execução fez. Em nosso caso, foi a adição do autor do post. Você pode voltar também as execução por meio de passos, informando o parâmetro `--step`:
+
+
+```
+php artisan migrate:rollback --step=2
+```
+Neste caso acima, ele desfará as duas migrações mais recentes, em nosso caso a criação da tabela posts e ainda a remoção da tabela de failed_jobs. Tabela posts criada por nós e failed_jobs que já vêm definido nas migrações do projeto.
+
+Podemos ainda realizar operações em cima de todas as migrações, desfazendo-as, de uma vez só com o comando abaixo:
+
+```
+php artisan migrate:reset
+```
+
+O comando acima desfará todas as migrações executadas em sua base, deixando apenas a tabela migrations mas vazia. Caso queiramos resetar mas executar as migrações novamente e ao mesmo tempo, podemos executar o comando abaixo:
+
+```
+php artisan migrate:refresh
+```
+
+Ou ainda executar tudo do zero novamente com o comando fresh, que apaga todas as tabelas e executa as migrations novamente:
+
+```
+php artisan migrate:fresh
+```
+
+Este comando acima executa um drop table na base mesmo para tabelas que não foram executadas via migration, então alerta com este comando.
+
+### Refresh com execução de seeds
+
+Caso queira voltar todos os passos executados nas migrations e na re-execução executar as seeds podemos informar o parâmetro `--seed` junto com o comando `refresh`. Veja abaixo:
+
+```
+php artisan migrate:refresh --seed
+```
+
+Com isso teremos a execução reversa das migrações, sua re-execução e ainda a execução das seeds no banco de dados. Veja o resultado do comando acima:
+
+![](resources/./images/migracoes-seeds.png)
+
+## Conclusões
+
+
+
+
+
+
 
 
