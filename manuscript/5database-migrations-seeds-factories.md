@@ -274,8 +274,93 @@ Ao executarmos o comando acima novamente o Laravel só executará as migrations 
 
 Agora que temos nossa tabela posts criada vamos mapear nosso primeiro relacionamento, entre posts e usuários caracterizando assim a relação de posts e autor. O relacionamento aquie irei mapear será de 1:N (Um para Muitos) onde 1 autor(usuário) poderá ter N (vários) posts e 1 post poderá ter ou pertencer a apenas um 1 autor.
 
-Como estamos definindo nossa base via migration vamos aprender aqui a definir este relacionamento e de quebra saber como alterar uma tabela já exsitente por meio de migrations. Neste momento alterar posts para adicionarmos a referência para user e ainda criar nossa chave estrangeira.
+Como estamos definindo nossa base via migrations vamos aprender aqui a definir este relacionamento e de quebra saber como alterar uma tabela já exsitente por meio de migrations. Neste momento alterar posts para adicionarmos a referência para user e ainda criar nossa chave estrangeira.
 
+Para isso execute o comando abaixo:
+
+```
+php artisan make:migration alter_table_posts_add_column_user_id --table=posts
+```
+
+Perceba que o comando continua o mesmo, eu apenas criei outro arquivo e aqui temos a chamada de um novo parâmetro, quando queremos criar uma tabela e suas definições nós utilizamos o método do objeto Schema chamado de create como vimos no trecho passado. Agora que eu quero alterar uma tabela já existente eu preciso utilizar o método `table` por isso chamei o parâmetro `--table` e o nome da tabela `posts`, este parâmetro vai gerar o conteúdo do arquivo conforme podemo ver abaixo:
+
+```
+<?php
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class AlterTablePostsAddColumnUserId extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('posts', function (Blueprint $table) {
+            //
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('posts', function (Blueprint $table) {
+            //
+        });
+    }
+}
+
+```
+
+Ele já traz os conteúdos do método `up` e do método `down` chamando o método `table`, o que nos resta é só adicionarmos nossas modificações para a tabela deseja que vai no primeiro parâmetro do método. O segundo, mesmo pensamento do create, vai as definições para a tabela na função anônima ou callback.
+
+Como vamos adicionar a referência para user, irei criar um campo `user_id` respeitando as mesmas configurações do campo id na tabela de users para que nossa ligação na chave estrangeira possa ser satisfeita.
+
+Precirei criar um campo do tipo `bigInteger` e `unsigned` para isso adicione no método `up` a definição abaixo:
+
+```
+$table->unsignedBigInteger('user_id')->after('id');
+```
+
+A definição já satisfaz o tipo e configurações esperadas para esta referência, e aqui temos mais um conhecimento como estou alterando a tabela posts pós criação, posso informar em que posição quero que o campo novo seja adicionado, no caso depois do campo id de posts que é realizado pelo método `after`(em pt depois) e informando o nome da coluna que quero colocar a nova coluna em posição.
+
+Agora, ainda no método `up`, precisamos criar nossa chave estrangeira para a coluna `user_id` referenciando coluna `id` na tabela `users`. Adicione o trecho abaixo, após a definição anterior.
+
+```
+$table->foreign('user_id')->references('id')->on('users');
+```
+
+Acima assinalei a criação da chave estrangeira com o método `foreign` informando o nome da coluna, no caso `user_id` e informei o campo e a tabela para esta criação, neste caso o campo `id` por meio do método `references` e a tabela por meio do método `on`. Ou seja se fossemos traduzir crie uma chave estrageira em `user_id` que faz referência para o `id` da tabela `users`.
+
+O nosso método `down`, por ser o reverso do `up`, conterá a remoção da chave estrangeira e também da coluna `user_id`. Então, adicione as duas definições abaixo:
+
+```
+$table->dropForeign('posts_user_id_foreign');
+$table->dropColumn('user_id');
+```
+
+Quando o Laravel, por meio das migrations, cria a chave estrangeira ela recebe o nome respeitando a estrutura abaixo:
+
+```
+tabela_coluna_foreign
+```
+
+Por isso no `down` estou apagando a chave estrangeira, por meio do método `dropForeign` e informando a string `posts_user_id_foreign` e logo após, por meio do método `dropColumn` removo a coluna `user_id` completando assim o reverso do que é executado no método `up`. Agora para que isso seja executado em nossa base, basta irmos ao nosso terminal e executarmos o comando abaixo:
+
+```
+php artisan migrate
+```
+Comando que já conhecemos e que vai executar a última migração criada porque ainda não temos registro dela ter sido executada. Veja o resultado:
+
+![](resources/./images/migracao-chave-estrangeira.png)
 
 
 
