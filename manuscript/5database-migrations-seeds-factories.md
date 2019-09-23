@@ -270,6 +270,12 @@ Ao executarmos o comando acima novamente o Laravel só executará as migrations 
 
 ![](resources/./images/executando-primeira-migration.png)
 
+## Relacionamentos via Migrations
+
+Agora que temos nossa tabela posts criada vamos mapear nosso primeiro relacionamento, entre posts e usuários caracterizando assim a relação de posts e autor. O relacionamento aquie irei mapear será de 1:N (Um para Muitos) onde 1 autor(usuário) poderá ter N (vários) posts e 1 post poderá ter ou pertencer a apenas um 1 autor.
+
+Como estamos definindo nossa base via migration vamos aprender aqui a definir este relacionamento e de quebra saber como alterar uma tabela já exsitente por meio de migrations. Neste momento alterar posts para adicionarmos a referência para user e ainda criar nossa chave estrangeira.
+
 
 
 
