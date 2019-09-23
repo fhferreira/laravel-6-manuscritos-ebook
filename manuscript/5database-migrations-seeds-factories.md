@@ -194,7 +194,82 @@ Mas como posso criar minhas migrações para tabelas do meu projeto também? Cer
 Primeiro passo é irmos ao nosso terminal e executarmos o comando para geração de nosso arquivo de migração:
 
 ```
-php artisna make:migration create_table_posts --create=posts
+php artisan make:migration create_table_posts --create=posts
 ```
+
+![](resources/./images/criando-migration.png)
+
+O comando acima criará nosso primeiro arquivo de migração dentro da pasta de migrações, chamado de `2019_09_23_095103_create_table_post`, o nome do arquivo de migração respeita a data de criação mais o timestamp e o nome escolhido, em nosso caso: `create_table_posts`. Essa deinição da data e timestamp permite o Laravel organizar a ordem  das migrações. 
+
+O parâmetro `--create=posts` adicionará para nós o código da classe `Schema` e o método `create` como podemos ver no conteúdo do arquivo gerado abaixo:
+
+```
+<?php
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateTablePost extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('posts', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('posts');
+    }
+}
+
+```
+
+Por termos utilizado o parâmetro `--create` além das definições do métodos `up` e `down` foram adicionados seus conteúdos com algum detalhes de campos iniciais no `up`, a definição do campo de auto incremento e a defnição dos campos de criação e atualização dos registros.
+
+O `down` já trouxe o movimento contrário, neste caso a remoção da tabela `posts`.
+
+Agora vamos as nossas adições, a adição dos nossos campos para nossa tabela de posts. Criaremos os seguintes campos:
+
+- title: string 255;
+- description: string 255;
+- content: text;
+- slug: string 255;
+- is_active: boolean;
+
+Agora como podemos representar este campos acima dentro do nosso arquivo? Vamos lá, após a definição do `bigIncrements` defina o código abaixo:
+
+```
+    $table->string('title');
+    $table->string('description');
+    $table->text('content');
+    $table->string('slug');
+    $table->boolean('is_active');
+```
+
+Simples, acima realizamos as definições dos nossos campos. Agora estamos aptos a executar esta migração em nosso banco de dados, para isso vamos ao nosso terminal executar o comando que já conhecemos. Veja abaixo:
+
+```
+php artisan migrate
+```
+
+Ao executarmos o comando acima novamente o Laravel só executará as migrations que ainda não foram executadas, em nosso caso e no momento a única que não foi executada foi a que geramos acima. Por isso teremos o resultado abaixo:
+
+![](resources/./images/executando-primeira-migration.png)
+
+
 
 
