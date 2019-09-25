@@ -3,3 +3,4 @@
 3routes-controllers.md
 4forms-request-response.md
 5database-migrations-seeds-factories.md
+6eloquent.md
