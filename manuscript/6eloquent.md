@@ -277,4 +277,172 @@ Vamos conhecer esta técnica.
 
 ## Mass Assignment
 
+Mass Assignment ou Atribuição em Massa é uma forma de inserir ou atualizar os dados por meio de uma única chamada e de uma vez só, como o nome já nos da lembranças. Por exemplo eu poderia passar todo o array vindo da request e já salvar isso direto no banco por meio de um método do `Eloquent` o método `create`.
+
+Então vamos a alteração, mais uma vez do nosso método `store`, que está assim:
+
+```
+public function store(Request $request)
+{
+    $data = $request->all();
+
+    $post = new Post();
+    
+    $post->title       = $data['title'];
+    $post->description = $data['description'];
+    $post->content     = $data['content'];
+    $post->slug        = $data['slug'];
+    $post->is_active   = true;
+    $post->user_id     = 1;
+
+    dd($post->save()); //veja o resultado no browser
+}
+```
+
+Agora, passará a ficar assim:
+
+```
+public function store(Request $request)
+{
+   $data = $request->all();
+   $data['user_id'] = 1;
+   $data['is_active'] = true;
+	 
+   $post = new Post();
+
+   dd($post->create($data));
+}
+```
+
+Perceba a redução acima, ao invés de chamarmos os atributos chamamos apenas o método do `create` passando para ele nosso array recuperado da request. Atente só a um detalhe, o array passado pro método `create` deve respeitar, em suas chaves, os nomes das colunas da tabela em questão.
+
+Obs.: Perceba que adicionei na mão a chave e valor para o `user_id` e a do `is_active`. Vamos trabalhar o `user_id` diretamente na parte de relação entre o Autor e a Postagem, como já mapeamos no banco. O `is_active` pode ir pro formulário com um `select` com as opções `ativo` ou `inativo` esta alteração faremos quando formos para o blade no próximo capítulo.
+
+Se você for ao browser e testar isso enviando os dados do formulário, perceberá que teremos uma exception sobre a adição de um campo na propriedade `$fillable` do model, aqui entra um ponto importante. Antes de comentar você também pode está se preocupando, esta atribuição em massa não pode ser problemático já que ele pelo visto aceita tudo?!
+
+Veja a exception lançada:
+
+![](resources/./images/exception-mass.png)
+
+Para resolver a exception lançada acima, sobre o atributo `$fillable` e o seu questionamento ao mesmo tempo, nós precisamos de fato definir este bendito atributo `$fillable`.
+
+Agora para que serve este atributo, tecnicamente ele é bem simples. Como estamos passando esta atribuição em massa, precisamos indicar para o Model/Eloquent que ao salvarmos os dados ou atualizarmos usando a atribuição em massa, que ele preencha os valores apenas para os campos definidos no array desta propriedade, ou seja, ele só vai atribuir valor para as colunas que estiverem registradas neste atributo `$fillable`.
+
+Vamos adicionar ele em nosso model `Post` e logo após comentarmos mais um pouco sobre este detalhe. Veja a alteração em `Post.php`:
+
+```
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Post extends Model
+{
+    protected $fillable = [
+		'title',
+	    'description',
+	    'content',
+	    'slug',
+	    'is_active',
+	    'user_id'
+    ];
+}
+
+```
+Agora com os campos aceitos pelo Mass Assignment ou Atribuição em Massa vamos enviar os dados novamente do nosso formulário.
+
+Veja o resultado, no dd, vindo do método `create`: 
+
+![](resources/./images/resultado-create.png)
+
+O método `create` ao criar um dado retorna este dado criado junto com seu id na base como resultado. Veja o conteúdo da informação abrindo a propriedade `original`.
+
+A segurança do método `create` usando a atribuição em massa se dá pela propriedade `$fillable` no model, uma vez definida e tendo as colunas permitidas só teremos o preechimento das informações para a coluna em questão se esta coluna estiver mapeada nesta propriedade.
+
+Agora como fazemos a atualização do dados com o Mass Assignment(Atribuição em Massa)?
+
+Vamos lá.
+
+### Atualizando dados
+
+Para atualizarmos os dados vamos trabalhar aqui com nossa view de edição e conhecer mais alguns detalhes do Laravel, crie lá dentro da pasta `resources/views/posts` o arquivo `edit.blade.php` e adicione o conteúdo abaixo:
+
+```
+<form action="{{route('posts.update', ['postId' => $post->id])}}" method="post">
+
+    @csrf
+    @method("PUT")
+
+    <div class="form-group">
+        <label>Titulo</label>
+        <input type="text" name="title" class="form-control" value="{{$post->title}}">
+    </div>
+
+    <div class="form-group">
+        <label>Descrição</label>
+        <input type="text" name="description" class="form-control" value="{{$post->description}}">
+    </div>
+
+    <div class="form-group">
+        <label>Conteúdo</label>
+        <textarea name="content" id="" cols="30" rows="10" class="form-control">{{$post->content}}</textarea>
+    </div>
+
+    <div class="form-group">
+        <label>Slug</label>
+        <input type="text" name="slug" class="form-control" value="{{$post->slug}}">
+    </div>
+
+    <button class="btn btn-lg btn-success">Atualizar Postagem</button>
+</form>
+
+```
+
+Agora, lá no método `show` do `PostController` substitua o dd pelo trecho abaixo:
+
+```
+return view('posts.edit', compact('post'));
+```
+
+Se você acessar o link `http://127.0.0.1:8000/admin/posts/1` você obterá o resultado abaixo:
+
+![](resources/./images/edit.png)
+
+Veja nosso formulário de edição já preenchido com os valores pegos do banco pelo Eloquent e enviados para a view.
+
+Agora vamos entender os códigos alterado acima. Vamos lá.
+
+Primeiramente atente a chamada da rota na action do formulário: 
+
+```
+<form action="{{route('posts.update', ['post' => $post->id])}}" method="post">
+```
+
+Enviaremos nossos dados para a rota de apelido `posts.update` atribuída pelo resource do `Route`. Informamos o nome do parâmetro dinâmico da rota que será o id da postagem, estes dados serão enviados para o método `update` que vamos criar lá no nosso controller.
+
+Temos agora mais uma alteração/novidade, a chamada da diretiva `@method`. Vamos entender ela.
+
+Sabemos que os formulários html só suportam os verbos http: `post` e `get`. Por meio desta diretiva `@method` fazemos o Laravel interpretar o formulário em questão, com verbo passado na diretiva, ou seja, como usei o valor `PUT` este formulário será interpretado pelo Laravel como sendo enviado via verbo PUT e cairá para a execução do método `update` do controller, que é o método que recebe as solicitações quando usamos os verbos `PUT` ou `PATCH` em nossa requisição.
+
+Continando, agora em nossos inputs recebemos os valores vindos lá do controller. Quando fazemos um `find` pelo dado desejado ele retorna um objeto populado com os dados requisitados, neste caso, os dados da postagem escolhida, o que nos resta é acessarmos eles respeitando os nomes das colunas mas chamando como atributos do objeto. Isso pode ser visto em cada atributo value dos inputs do nosso formulário.
+
+Agora precisamos definir o método para manipulação do dados enviados do formulário de edição, para isso crie um método chamado de `update` em seu controller com o conteúdo abaixo:
+
+```
+public function update($id, Request $request)
+{
+    //Atualizando com mass assignment
+    $data = $request->all();
+
+    $post = Post::findOrFail($id);
+
+    dd($post->update($data));
+}
+```
+
+Perceba que 
+
+Acessando o formulário de edição no link `http://127.0.0.1:8000/admin/posts/1` vamos alterar algum campo e clicar em `Atualizar Postagem`.
+
 
