@@ -441,8 +441,57 @@ public function update($id, Request $request)
 }
 ```
 
-Perceba que 
+Perceba que busquei a postagem usando o método `findOrFail` pelo id vindo da `url` e do parâmetro dinâmico. Neste caso como quero atualizar, o método da atribuição para atualização em massa, é o update que me retorna um booleano para o sucesso ou falha desta execução.
 
-Acessando o formulário de edição no link `http://127.0.0.1:8000/admin/posts/1` vamos alterar algum campo e clicar em `Atualizar Postagem`.
+
+Acessando o formulário de edição no link `http://127.0.0.1:8000/admin/posts/1` vamos alterar algum campo e clicar em `Atualizar Postagem`. Veja o resultado:
+
+![](resources/./images/update.png)
+
+### Deletando Registros
+
+Bom para completarmos nosso ciclo, vamos deletar postagens de nossa base. Isso será realizado pelo método `delete` do `Eloquent`. Veja o método abaixo, a ser adicionado no `PostController`:
+
+```
+public function destroy($id)
+{
+    $post = Post::findOrFail($id);
+    
+    dd($post->delete());
+}
+```
+
+O método do controller como recurso que responde a chamada para remoção de um dado é o `destroy` entretanto o método do `Eloquent` que irá remover um dado é o `delete` que retorna um boleano para o caso de sucesso ou falha da operação de remoção do dado da base. Perceba que como queremos remover o dado, precisamo buscar por ele via `Eloquent` para então removermos.
+
+Agora precisamos adicionar o botão de remoção lá na tela e edição, neste caso como precisamos simular o envio do verbo http **DELETE**, vou precisar usar um form para o botão de remoção. Adicione o form abaixo, após o formulário de edição:
+
+```
+<form action="{{route('posts.destroy', ['post' => $post->id])}}" method="post">
+    @csrf
+    @method('DELETE')
+    <button type="submit">Remover Post</button>
+</form>
+```
+
+Perceba também que temos adicionado o controle csrf para esta operação além da definição da diretiva @method com o verbo `DELETE`. A tela de edição fica assim:
+
+![](resources/./images/removendo-coisas.png)
+
+Ao clicar no botão remover você verá o resultado na tela true para sucesso na remoção ou false para o caso de falha. Após removido se tentarmos acessar a mesma postagem teremos uma tela de 404 em nossa cara:
+
+![](resources/./images/post-nao-encontrado.png)
+
+Agora completamos as 4 etapas de um CRUD completo e utilizando o Eloquent que nos permite trabalhar com o banco pela visão de objetos.
+
+## Conclusões
+
+Neste capítulo conhecemos diversas possibilidades usando o Eloquent, o ORM padrão do Laravel. Com isso realizamos a criação de um CRUD completo usando nosso Model `Post` por meio dos métodos disponiveis e herdados do Model do Eloquent, que nos permitiu realizarmos estas operações de seleção na base, criação, atualização e ainda remoção dos dados.
+
+Para completarmos o ciclo e deixarmos as coisas mais dinâmicas e integradas precisamos conhecer o Blade, o famoso template engine do Laravel e que nos permite escrever views de forma mais dinâmica e rápida.
+
+Conheceremos o Blade no próximo capítulo. Até lá!
+
+
+
 
 
