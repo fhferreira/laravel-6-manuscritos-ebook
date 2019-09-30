@@ -140,3 +140,101 @@ Veja o formulário na íntegra na imagem abaixo:
 
 ![](resources/./images/edicao-pos-layout.png)
 
+Lembra que comentei que já tinha adicionado algumas classes do Bootstrap no Formulário, agora que linkamos o bootstrap.css lá no app.blade.php os estilos foram aplicados e nossa interface está mais aceitável.
+
+Agora vamos para a nossa listagem dos posts e conhecer mais possibilidades do Blade.
+
+## Laços de Repetição & Condicionais
+
+Sabemos que para iterarmos em cima de uma coleção de dados precisamos usar laços de repetição, o Blade nos traz algumas possibilidades interessantes. A primeira delas é a possibilidade de utilição do foreach, como vemos abaixo:
+
+```
+@foreach($posts as $post)
+	<li>$post->title</li>
+@endforeach
+```
+
+Desta maneira a iteração na coleção de posts vindas do banco de dados no mesmos moldes do foreach do PHP, e claro, no procesamento desta view essa diretiva se tornará um foreach nativo.
+
+Mas aqui quero utilizar um foreach não muito convencional do dia a dia da forma que vamos escrever, mas é claro que com condicionais e combinando com os laços chegariamos no mesmo resultado. Mas Nanderson, do que você está falando!
+
+Por exemplo, poderíamos fazer um controle condicional pro caso de não existirem postagens na base e somente, se existirem, exibissemos a tabela com elas. Por exemplo, veja o trecho abaixo:
+
+```
+@if($posts)
+    @foreach($posts as $post)
+		<li>$post->title</li>
+	@endforeach
+@else 
+   <h2> Nenhuma postagem cadastrada!</h2>
+@endif
+```
+
+Acima de cara te apresento o controle condicional ou como usar os se...senão (if...else) via diretivas do Blade. Primeiramente verificamos se o valor de `$posts` é verdadeiro, se verdadeiro nós realizamos os loops, senão exibimos uma mensagem padrão.
+
+Agora podemos melhorar essa escrita usando blade com a diretiva de loop chamada de `@forelse`. Vamos ao conteúdo do nosso `index.blade.php`, então crie este arquivo lá dentro da pasta das views de posts. 
+
+Veja seu conteúdo abaixo:
+
+```
+@extends('layouts.app')
+
+@section('content')
+    <div class="row">
+        <div class="col-sm-12">
+            <a href="{{route('posts.create')}}" class="btn btn-success float-right">Criar Postagem</a>
+            <h2>Postagens Blog</h2>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Titulo</th>
+                <th>Descrição</th>
+                <th>Status</th>
+                <th>Criado em</th>
+            </tr>
+        </thead>
+        <tbody>
+        @forelse($posts as $post)
+            <tr>
+                <td>{{$post->title}}</td>
+                <td>{{$post->description}}</td>
+                <td>
+                    @if($post->is_active)
+                        <span class="badge badge-success">Ativo</span>
+                    @else
+                        <span class="badge badge-danger">Inativo</span>
+                    @endif
+                </td>
+                <td>{{date('d/m/Y H:i:s', strtotime($post->created_at))}}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="4">Nada encontrado!</td>
+            </tr>
+        @endforelse
+        </tbody>
+    </table>
+@endsection
+```
+
+Não esqueça de substituir, lá no controller `PostController`, o `dd` por:
+
+```
+return view('posts.index', compact('posts'));
+```
+
+Vamos ao ponto da view `index.blade.php`. Perceba que aqui usei a diretiva:
+
+```
+@forelse($posts as $post)
+  ...
+@empty
+  ...
+@endforelse
+
+```
+
+
