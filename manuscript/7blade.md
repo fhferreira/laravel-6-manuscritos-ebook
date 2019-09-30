@@ -238,3 +238,8 @@ Vamos ao ponto da view `index.blade.php`. Perceba que aqui usei a diretiva:
 ```
 
 
+Resultado da nossa view:
+
+![](resources/./images/index-blog.png)
+
+
