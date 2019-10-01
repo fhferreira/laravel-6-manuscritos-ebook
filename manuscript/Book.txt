@@ -5,3 +5,4 @@
 5database-migrations-seeds-factories.md
 6eloquent.md
 7blade.md
+8eloquent-relacionamentos.md
