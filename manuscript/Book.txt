@@ -4,3 +4,4 @@
 4forms-request-response.md
 5database-migrations-seeds-factories.md
 6eloquent.md
+7blade.md
