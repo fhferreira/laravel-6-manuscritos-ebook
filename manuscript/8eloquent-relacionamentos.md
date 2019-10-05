@@ -143,4 +143,213 @@ Pegando a ligação que está em Post, `user`, e pegando o atributo name do usu�
 
 Vou explicar isso agora, vamos lá!
 
-Aqui tecnicamente é bem simples, quando você acessar a ligação como se fosse um atributo uma coleção é retornada ou 
+Aqui tecnicamente é bem simples, quando você acessar a ligação como se fosse o atributo da classe uma coleção é retornada ou o objeto oposto da ligação. Para simplificar:
+
+- Como user tem muitos posts o retorno de `$user->posts` seria a coleção de posts ligadas ao usuário em questão;
+- Já como uma postagem está ligada ou pertence a apenas um usuário, a chamada `$post->user` retornará o objeto User com as informações do usuário ligado a aquela postagem.
+
+Se em algum momento você quiser recuperar as postagens de um usuário, por exemplo do usuário 2, você pode seguir o pensamento do trecho de código abaixo:
+
+```
+...
+#No controller fazer a busca pelo usuário
+
+$user = User::find(1);
+
+#Acessar a ligação de usuário e postagens
+
+$posts = $user->posts;
+```
+
+E na view você poderia fazer o loop, usando `@foreach` ou o `@forelse` que já utilizamos aqui.
+
+```
+@foreach($posts as $post)
+   
+    <h2>{{$post->title}}</h2>
+   
+@endforeach
+```
+
+Vamos as considerações sobre inserção de dados para esta relação!
+
+## Inserindo Autor da Postagem
+
+A minha intenção nesta inserção é termos o usuário logado e quando este criar a postagem nós pegamos a referência dele na sessão mas como ainda não chegamos na parte de autenticação vou colocar direto no código a criação desta relação diretamente.
+
+No próximo capítulo vamos conhecer a parte de autenticação e lá realizaremos essa melhoria. Sem mais delongas vamos a criação do autor do post no momento da criação da postagem.
+
+Vamos ao nosso método `store` lá no `PostController`. Faça a seguinte alteração no código, o que está assim:
+
+```
+public function store(Request $request)
+{
+    //Salvando com mass assignment
+    $data = $request->all();
+    $data['user_id'] = 1;
+    $data['is_active'] = true;
+
+    $post = new Post();
+
+    dd($post->create($data));
+}
+```
+
+Ficará assim:
+
+```
+public function store(Request $request)
+{
+	$data = $request->all();
+	$data['is_active'] = true;
+	
+	$user = Post::find(1);
+	
+	//Continuamos a salvar com mass assignment mas por meio do usuário
+	$user->posts()->create($data);
+	
+	return redirect()->route('posts.index');
+}
+```
+
+Perceba que agora nós inserimos uma nova postagem por meio da ligação que temos com o usuário, como eu quero ter acesso aos métodos da ligação eu preciso chamar de fato o método `posts()` ao invés de chamar como atributo `posts`.
+
+O Eloquent ao criar a postagem irá adicionar a referência do usuário que buscamos por meio do método `find` automaticamente. Como a postagem pertence ao usuário, defini ele como prioridade quando busquei pelo mesmo primeiramente e adicionei uma postagem ao seu conjunto de posts.
+
+
+## ManyToMany com Eloquent: Categorias e Posts
+
+Agora neste ponto vamos começar a parte da relação de Muitos para Muitos, a relação aqui será entre Posts e Categorias. Vamos primeiramente criar o model Category(Categoria), suas migrations e todo o CRUD deste cara. 
+
+Podemos já começar criando nosso model com todo o aparato necessário de uma vez só, criar o model, a migration e o controller como recurso de uma vez só!
+
+Execute na raiz do seu projeto o comando abaixo:
+
+```
+php artisan make:model Category -m -c -r
+```
+
+Veja o resultado:
+
+![](resources/./images/model-cat.png)
+
+Obs.: O comando irá criar o controller na pasta de Controllers normalmente, apenas mova este controller para a pasta `Admin` e corrija o namespace, de `namespace App\Http\Controllers;` para `namespace App\Http\Controllers\Admin;` e adicione o import do controller base: `use App\Http\Controllers\Controller;`.
+
+Veja o controller na íntegra depois das observações acima:
+
+```
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Category;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+
+class CategoryController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index()
+    {
+        //
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Category  $category
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Category $category)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Category  $category
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Category $category)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Category  $category
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Category $category)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Category  $category
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Category $category)
+    {
+        //
+    }
+}
+```
+
+Por enquanto vamos deixá-lo assim, vamos da uma atenção lá para nossa migration, acesse a pasta de migrations e abra o arquivo: `2019_10_05_162546_create_categories_table.php`.
+
+Adicione o seguintes campos abaixo:
+
+```
+$table->string('name');
+$table->string('description')->nullable();
+$table->string('slug');
+```
+
+Como você pode ver o Laravel pegou o nome do nosso model e já preparou nossa migration para o plural pela convenção já comentada aqui. Neste caso teremos a tabela `categories` com os campos:
+
+- id;
+- name;
+- description;
+- slug;
+- created_at;
+- updated_at;
+
+Após as alterações que comentei anteriormente vamos criar uma nova migration, a migração para nossa tabela pivot para a relação de muitos para muitos. Muitos para Muitos permite que uma postagem tenha várias categorias e uma categoria tenha várias postagens. Pensando nisso precisamos de uma tabela intermediária para manter esta relação/ligação.
+
+Para isso execute em seu terminal o comando abaixo para criação da migração para esta tabela intermediária:
+
+```
+php artisan make:migration create_table_posts_categories --create=posts_categories
+```
+
