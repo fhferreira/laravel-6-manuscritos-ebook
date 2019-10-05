@@ -353,3 +353,55 @@ Para isso execute em seu terminal o comando abaixo para criação da migração 
 php artisan make:migration create_table_posts_categories --create=posts_categories
 ```
 
+Veja o conteúdo na íntegra da migração:
+
+```
+<?php
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class CreateTablePostsCategories extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('posts_categories', function (Blueprint $table) {
+            $table->unsignedBigInteger('post_id');
+	        $table->unsignedBigInteger('category_id');
+
+	        $table->foreign('post_id')->references('id')->on('posts');
+	        $table->foreign('category_id')->references('id')->on('categories');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('posts_categories');
+    }
+}
+
+```
+Do método `up` remova o `bigIncrements` e o  `timestamps` e adicione o conteúdo como acima. Nesta tabela precisamos apenas das referências, um para o post e o outro para a categoria, além das chaves estrangeiras referenciando cada tabela pelo seu id.
+
+Agora podemos executar esta migration na base de dados, então execute em seu terminal ou cmd(no Windows) o comando abaixo:
+
+```
+php artisan migrate
+```
+
+Veja o resultado:
+
+![](resources/./images/migrate-cat-posts.png)
+
+
