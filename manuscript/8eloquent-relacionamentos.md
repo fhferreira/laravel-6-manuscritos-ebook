@@ -203,13 +203,19 @@ public function store(Request $request)
 	$data = $request->all();
 	$data['is_active'] = true;
 	
-	$user = Post::find(1);
+	$user = User::find(1);
 	
 	//Continuamos a salvar com mass assignment mas por meio do usuário
 	$user->posts()->create($data);
 	
 	return redirect()->route('posts.index');
 }
+```
+
+Não esqueça de importar `User`:
+
+```
+use \App\User;
 ```
 
 Perceba que agora nós inserimos uma nova postagem por meio da ligação que temos com o usuário, como eu quero ter acesso aos métodos da ligação eu preciso chamar de fato o método `posts()` ao invés de chamar como atributo `posts`.
@@ -403,5 +409,536 @@ php artisan migrate
 Veja o resultado:
 
 ![](resources/./images/migrate-cat-posts.png)
+
+
+Com as migrations definidas, como podemos mapear nossa relação do ponto de vista do model? Existe no Eloquent o método para esta relação, o `belongsToMany` que estará nos dois models por conta da tabela intermedirária.
+
+Então vamos adicionar o método abaixo dentro do nosso model `Post`:
+
+```
+public function categories()
+{
+	return $this->belongsToMany(Category::class, 'posts_categories');
+}
+```
+
+E no Model `Category` adicione o método abaixo:
+
+```
+public function posts()
+{
+	return $this->belongsToMany(Post::class, 'posts_categories');
+}
+```
+
+O método `belongsToMany` nos permite o mapeamento na relação de muitos p/ muitos entre os dois models, como ambos apontam para a mesma tabela, o método de ambos os lados também é o mesmo.
+
+Aqui vale um aprendizado e um adendo, o segundo parâmetro do método `belongsToMany` é o nome da tabela intermediária(`posts_categories` em nosso caso), mas por que eu preenchi este valor?
+
+Eu preenchi  valor desta coluna pois escolhi meu proprio nome de tabela intermediária que não é o mesmo que o Laravel iria tentar resolver de forma automatica.
+
+Mas Nanderson, como eu faço se eu quiser que o Laravel resolva automaticamente a tabela sem precisar do segundo parâmetro como tu fizestes?!
+
+Aqui vai os aprendizados.
+
+O Laravel, caso não existisse o segundo parâmetro como fiz, vai buscar a tabela no banco respeitando o nome da tabela intermediária no singular e em ordem alfabética, ou seja, se temos `posts` e `categories` ele supõe que a tabela intermediária seja `category_post`, nomes no singular separados pelo `_` e em ordem alfabética **c** antes do **p**.
+
+Antes de criarmos nosso post com suas categorias vamos criar rapidamente o CRUD de categorias com alguns detalhes a mais a serem adicionados também em nosso CRUD de posts.
+
+## CRUD de Categorias
+
+Vamos criar nosso CRUD com os controles de exceptions, bloco **try...catch**, e com redirecionamentos e mensagens de execução para o usuário. Para isto vamos instalar um pacote para estas mensagens, em seu terminal execute o comando abaixo:
+
+```
+composer require laracasts/flash
+```
+
+Este pacote nos permite de forma simples e rápida criarmos mensagens de execução para nosso usuários, menagens que digam o que aconteceu no processo.
+
+
+Por exemplo após a inserção de uma postagem ou categoria podemos jogar a mensagem via larcasts/flash, pro caso de sucesso da inserção da seguinte maneira:
+
+```
+flash('Postagem criada com sucesso!)->success();
+```
+
+Isso produzirá na tela um sessão com a mensagem informada e com as classes do twitter bootstrap: `alert` e `alert-success`.
+
+
+Agora vamos ao noso controller, irei colocar método por método do controller de Categorias, o `CategoryController`, para vermos os pontos importantes sobre cada método. Ao final coloco ele na íntegra para conferência.
+
+Vamos ao primeiro método, o método index e o construtor:
+
+```
+/**
+ * @var Category
+ */
+private $category;
+
+public function __construct(Category $category)
+{
+	$this->category = $category;
+}
+
+/**
+ * Display a listing of the resource.
+ *
+ * @return \Illuminate\Http\Response
+ */
+public function index()
+{
+    $categories = $this->category->paginate(15);
+
+    return view('categories.index', compact('categories'));
+
+}
+```
+
+O primeiro ponto importante é a utilização do nosso model como dependência do construtor da classe controller. Com isso teremos por meio do container de serviços do Laravel a instância do nosso model sempre que nosso controller for chamado. Isso simplifica muito as coisas e nos ajuda a mantermos nosso controller mais focado.
+
+Falarei um pouco mais sobre o container de serviços mais a frente mas aqui já temos uma pequena pitada do que é possivel fazer com esse cara!
+
+Continuando para o método index, a difernça direta aqui é que ao invés de chamadar o `paginate` pelo model, chamos pelo atributo do controller que receberá a instância do nosso model.
+
+O método a seguir é o create, que dispensa comentários até então, veja ele:
+
+```
+/**
+ * Show the form for creating a new resource.
+ *
+ * @return \Illuminate\Http\Response
+ */
+public function create()
+{
+    return view('categories.create');
+}
+
+```
+
+Vamos continuando para o método store, onde de fato persistimos nossos dados, neste caso categoria. Veja ele e logo após os comentários:
+
+```
+/**
+ * Store a newly created resource in storage.
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return \Illuminate\Http\Response
+ */
+public function store(Request $request)
+{
+	$data = $request->all();
+
+    try {
+		$category = $this->category->create($data);
+
+		flash('Categoria criada com sucesso!')->success();
+		return redirect()->route('categories.index');
+
+    } catch (\Exception $e) {
+    	$message = 'Erro ao criar categoria!';
+
+		if(env('APP_DEBUG')) {
+			$message = $e->getMessage();
+		}
+
+		flash($message)->warning();
+		return redirect()->back();
+    }
+}
+```
+
+Aqui mais uma referência ao nosso atributo que contêm a instância do nosso model, usamos o mass assignment que já conhecemos. Agora temos mais alguns detalhes, primeiramente estamos controlando nossos processos com os blocks **try...catch** que nos permite um maior controle caso as Exceptions com erros sejam lançadas. 
+
+Usamos também tanto para as mensagens de execução de sucesso ou erro o pacote que instalamos anteriormente, o laracasts/flash, onde definimos as mensagens e o tipo delas se sucesso ou warning(recomendo a documentação pois temos mais tipos).
+
+Logo após o set das mensagens d execução usamos o redirecionamento do Laravel por meio do helper `redirect` onde pro sucesso redirecionamos para a tela principal de categorias dentro do admin, mas aqui por boa prática, redirecionamos pelo apelido da rota por isto chamos o método route que já usamos nas views!
+
+```
+flash('Categoria criada com sucesso!')->success();
+return redirect()->route('categories.index');
+```
+
+Veja o block `catch`:
+
+```
+ catch (\Exception $e) {
+	$message = 'Erro ao criar categoria!';
+
+	if(env('APP_DEBUG')) {
+		$message = $e->getMessage();
+	}
+
+	flash($message)->warning();
+	return redirect()->back();
+}
+```
+
+Aqui faço um controller para só exibirmos as mensagens reais dos erros se lá em nosso arquivo .env a variável `APP_DEBUG` estiver como verdadeira, ou seja, só veremos as mensagens de erro reis em ambiente de desenvolvimento, em produção teremos mensagens padrões como: `"Erro ao criar categoria"`.
+
+
+O método show têm um pequeno detalhe que preciso comentar, veja:
+
+```
+ /**
+ * Display the specified resource.
+ *
+ * @param  \App\Category  $category
+ * @return \Illuminate\Http\Response
+ */
+public function show(Category $category)
+{
+    return view('categories.edit', compact('category'));
+}
+```
+
+Perceba de cara o parâmetro tipado do método `show`, tipado para aceitar apenas instâncias do nosso model. Um ponto importante aqui é que quando temos um parâmetro tipado assim o Laravel automáticamente vai converter este parâmetro para um objeto populado para o id informado, por isso que não estou realizando um `find` ou `findOrFail` aqui porque quando chegamos no controller já temos a instância do objeto `Category` populada com o id informado como comentei.
+
+Então, só mando para a view edti de categorias.
+
+Quando agente gera um controller como recurso temos a geração também do método edit. Que serviria de fato para exibição do nosso formulário de edição. Particularmente não teremos tela somente de conferência dos dados de categorias ou postagens por isso já exibo o formulário no método show. E o que adiciono no método `edit`, poderiamos removê-lo ou apenas fazer um redirecionamento, como fiz, veja abaixo:
+
+```
+/**
+ * Show the form for editing the specified resource.
+ *
+ * @param  \App\Category  $category
+ * @return \Illuminate\Http\Response
+ */
+public function edit(Category $category)
+{
+    return redirect()->route('categories.show', ['category' => $category->id]);
+}
+```
+
+Agora caímos para o método update, realmente aqui não temos muito a comentar uma vez que os detalhes já são conhecidos e a forma de atualização também:
+
+```
+/**
+ * Update the specified resource in storage.
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @param  \App\Category  $category
+ * @return \Illuminate\Http\Response
+ */
+public function update(Request $request, Category $category)
+{
+    $data = $request->all();
+
+    try {
+	    $category->update($data);
+
+	    flash('Categoria atualizada com sucesso!')->success();
+	    return redirect()->route('categories.show', ['category' => $category->id]);
+
+    } catch (\Exception $e) {
+	    $message = 'Erro ao atualizar categoria!';
+
+	    if(env('APP_DEBUG')) {
+		    $message = $e->getMessage();
+	    }
+
+	    flash($message)->warning();
+	    return redirect()->back();
+    }
+}
+```
+
+A remoção/delete também segue o mesmo pensamento, veja:
+
+```
+/**
+ * Remove the specified resource from storage.
+ *
+ * @param  \App\Category  $category
+ * @return \Illuminate\Http\Response
+ */
+public function destroy(Category $category)
+{
+    try {
+	    $category->delete();
+
+	    flash('Categoria removida com sucesso!')->success();
+	    return redirect()->route('categories.index');
+
+    } catch (\Exception $e) {
+	    $message = 'Erro ao remover categoria!';
+
+	    if(env('APP_DEBUG')) {
+		    $message = $e->getMessage();
+	    }
+
+	    flash($message)->warning();
+	    return redirect()->back();
+    }
+}
+```
+
+As views também não têm novidades, mas antes, cria a pasta `categories` dentro de views e os arquivos:
+
+- index.blade.php;
+- create.blade.php;
+- edit.blade.php.
+
+Com os conteúdos:
+
+**index.blade.php**:
+
+```
+@extends('layouts.app')
+
+@section('content')
+    <div class="row">
+        <div class="col-sm-12">
+            <a href="{{route('categories.create')}}" class="btn btn-success float-right">Criar Categoria</a>
+            <h2>Categorias Blog</h2>
+            <div class="clearfix"></div>
+        </div>
+    </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>Criado em</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+        @forelse($categories as $category)
+            <tr>
+                <td>{{$category->id}}</td>
+                <td>{{$category->name}}</td>
+                <td>{{date('d/m/Y H:i:s', strtotime($category->created_at))}}</td>
+                <td>
+                    <div class="btn-group">
+                        <a href="{{route('categories.show', ['category' => $category->id])}}" class="btn btn-sm btn-primary">
+                            Editar
+                        </a>
+                        <form action="{{route('categories.destroy', ['category' => $category->id])}}" method="post">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-danger">Remover</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="4">Nada encontrado!</td>
+            </tr>
+        @endforelse
+        </tbody>
+    </table>
+
+    {{$categories->links()}}
+@endsection
+```
+
+**create.blade.php**:
+
+```
+@extends('layouts.app')
+
+@section('content')
+    <form action="{{route('categories.store')}}" method="post">
+
+        @csrf
+
+        <div class="form-group">
+            <label>Nome</label>
+            <input type="text" name="name" class="form-control" value="{{old('name')}}">
+        </div>
+
+        <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" name="description" class="form-control" value="{{old('description')}}">
+        </div>
+
+        <div class="form-group">
+            <label>Slug</label>
+            <input type="text" name="slug" class="form-control" value="{{old('slug')}}">
+        </div>
+
+        <button class="btn btn-lg btn-success">Criar Categoria</button>
+    </form>
+@endsection
+```
+
+**edit.blade.php**:
+
+```
+@extends('layouts.app')
+
+@section('content')
+    <form action="{{route('categories.update', ['category' => $category->id])}}" method="post">
+
+        @csrf
+        @method("PUT")
+
+        <div class="form-group">
+            <label>Nome</label>
+            <input type="text" name="name" class="form-control" value="{{$category->name}}">
+        </div>
+
+        <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" name="description" class="form-control" value="{{$category->description}}">
+        </div>
+
+        <div class="form-group">
+            <label>Slug</label>
+            <input type="text" name="slug" class="form-control" value="{{$category->slug}}">
+        </div>
+
+        <button class="btn btn-lg btn-success">Atualizar Categoria</button>
+    </form>
+@endsection
+```
+
+Criada as views de categorias, precisamos adicionar lá no nosso layout a possibilidade de exibição de nossas mensagens. Dentro do nosso bloco onde se encontra o `yield('content')`, adicione acima dele o include abaixo:
+
+```
+@include("flash::message")
+```
+
+Veja como ficou o trecho do yield:
+
+```
+...
+<div class="container">
+    @include("flash::message")
+    @yield('content')
+</div>
+...
+
+```
+
+Ah e não esqueça de link no menu do `layout.blade.php` o menu de categorias, veja o trecho adicionado logo após o link de posts:
+
+```
+ <li class="nav-item active">
+    <a class="nav-link" href="{{ route('categories.index') }}">Categorias</a>
+</li>
+```
+
+Esta inclusão exibirá os alertas com as classes do twitter bootstrap conforme o método escolhido, na cor verde para a chamada do `->success()` na cor amarela para a chamada `->warning()`.
+
+Agora que nosso CRUD de categorias está pronto, faça alguns testes e crie algumas categorias para termos insumo no momento da inclusão das categorias para uma postagem.
+
+Abaixo, deixo nosso controller Posts alterado com os pensamentos feitos no controller de Categorias. Como não criamos ele diretamente como recursos pelo terminal, ele vai está sem alguns comentários como vimos no `CategoryController` mas isso são detalhes.
+
+Veja ele na íntegra:
+
+```
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\User;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Post;
+
+class PostController extends Controller
+{
+	/**
+	 * @var Post
+	 */
+	private $post;
+
+	public function __construct(Post $post)
+	{
+		$this->post = $post;
+	}
+
+	public function index()
+	{
+		$posts = $this->post->paginate(15);
+
+		return view('posts.index', compact('posts'));
+	}
+
+	public function show(Post $post)
+	{
+		return view('posts.edit', compact('post'));
+	}
+
+    public function create()
+    {
+		return view('posts.create');
+    }
+
+    public function store(Request $request)
+    {
+    	$data = $request->all();
+	    try{
+	        $data['is_active'] = true;
+
+		    $user = User::find(1);
+			$user->posts()->create($data);
+
+			flash('Postagem inserida com sucesso!')->success();
+			return redirect()->route('posts.index');
+
+	    } catch (\Exception $e) {
+		    $message = 'Erro ao remover categoria!';
+
+		    if(env('APP_DEBUG')) {
+			    $message = $e->getMessage();
+		    }
+
+		    flash($message)->warning();
+		    return redirect()->back();
+	    }
+    }
+
+    public function update(Post $post, Request $request) {
+	    $data = $request->all();
+
+		try{
+			$post->update($data);
+
+		    flash('Postagem atualizada com sucesso!')->success();
+		    return redirect()->route('posts.show', ['post' => $post->id]);
+
+        } catch (\Exception $e) {
+		    $message = 'Erro ao remover categoria!';
+
+		    if(env('APP_DEBUG')) {
+			    $message = $e->getMessage();
+		    }
+
+		    flash($message)->warning();
+		    return redirect()->back();
+	    }
+    }
+
+	public function destroy(Post $post)
+	{
+		try {
+			$post->delete($post);
+
+			flash('Postagem removida com sucesso!')->success();
+			return redirect()->route('posts.index');
+
+		} catch (\Exception $e) {
+			$message = 'Erro ao remover categoria!';
+
+			if(env('APP_DEBUG')) {
+				$message = $e->getMessage();
+			}
+
+			flash($message)->warning();
+			return redirect()->back();
+		}
+	}
+}
+
+```
+
+Aplicada as melhorias no controller `PostController` vamos a alterações para a inserção desta relação muitos para muitos entre Posts e Categorias.
+
+## Inserindo Muito para Muitos (Post x Category)
+
 
 
