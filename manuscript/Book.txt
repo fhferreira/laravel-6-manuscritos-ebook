@@ -6,3 +6,4 @@
 6eloquent.md
 7blade.md
 8eloquent-relacionamentos.md
+9auth.md
