@@ -7,4 +7,3 @@
 7blade.md
 8eloquent-relacionamentos.md
 9auth.md
-10upload.md
