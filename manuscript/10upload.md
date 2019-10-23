@@ -205,7 +205,9 @@ Lá no controller `ProfileController`, logo após a recuperação do usuário da
 
 ```
 if($request->hasFile('avatar')) {
+
     $profileData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+    
 } else {
 	unset($profileData['avatar']);
 }
@@ -215,6 +217,37 @@ if($request->hasFile('avatar')) {
 Primeiramente verifico se a request possui o arquivo da imagem usando o método `hasFile` e informando o nome do input, existindo, eu crio a chave `avatar` no array dentro de `$profileData` e uso os métodos `file` para recuperar a imagem enviada e o método `store` logo em seguinda. Passando o nome da pasta `avatars` e o disco `public`, que resultará em nossa imagem salva dentro de `storage/app/public/avatars`.
 
 O retorno deste upload eu mando para a chave avatar recém criada, que ao atualizarmos o perfil receberá o nome da imagem bem como o nome da pasta `avatars` junto. Agora se formos ao nosso formulário, podemos testar o envio de uma foto para o perfil do usuário.
+
+Antes de testarmos, precisamos realizar mais uma melhoria no upload. Como vamos atualizar a foto do usuário precisamos remover a foto anterior, o arquivo no caso. Para isso precisamos usar o objeto storage para interagirmos com nossa pasta storage. Veja o trecho abaixo:
+
+```
+Storage::disk('public')->delete($user->avatar);
+```
+
+Acima seleciono o disco `public`, para onde movemos os arquivos do avatar do usuário, usando o método delete e informando o avatar do usuário removemos a foto da pasta `avatars`*.
+
+*Lembra que o nome da pasta é salva junto com o nome do arquivo lá no nosso banco, na tabela do profile.
+
+Agora nosso trecho fica desta maneira:
+
+```
+if($request->hasFile('avatar')) {
+    
+    Storage::disk('public')->delete($user->avatar);
+
+    $profileData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+    
+} else {
+	unset($profileData['avatar']);
+}
+```
+PS.: Não esqueça de importar a classe:
+
+```
+use Illuminate\Support\Facades\Storage;
+```
+
+## Testando upload de foto do perfil
 
 Para testarmos vamos exibir a foto do usuário logo ao lado do seu nome no menu superior. Onde exibimos o nome do usuário e o menu dropdown para os links sair e profile, adicione a tag imagem como vemos adicionada abaixo no mesmo trecho:
 
@@ -254,5 +287,215 @@ Vamos ao upload da foto de capa da postagem.
 
 ## Upload de Capa Postagem
 
+
+Primeiramente vamos criar a migration para adição da coluna `thumb` na tabela posts. Execute na raiz do seu projeto o comando abaixo:
+
+```
+php artisan make:migration alter_table_posts_add_column_thumb --table=posts
+```
+
+![](resources/./images/add-column-thumb.png)
+
+Segue na íntegra o conteúdo da migração:
+
+```
+<?php
+
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
+
+class AlterTablePostsAddColumnThumb extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('posts', function (Blueprint $table) {
+            $table->string('thumb')->nullable();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('posts', function (Blueprint $table) {
+            $table->dropColumn('thumb');
+        });
+    }
+}
+
+```
+
+Uma adição simples da coluna `thumb` tipo VARCHAR e permintindo valores nulos, o reverso é a remoção desta coluna.
+
+Agora execute a migração na sua base, com o comando: `php artisan migrate` e vamos prosseguir.
+
+
+Obs.: Não esqueça de adicionar ela, a coluna thumb, lá no model `Post`, no array `$fillable`.
+
+Agora precisamos adicionar os inputs nos forms de criação e edição das postagens e não esqueça do atributo `enctype` na tag form. Veja os forms abaixo:
+
+**resources/views/posts/create.blade.php**:
+
+```
+@extends('layouts.app')
+
+@section('content')
+    <form action="{{route('posts.store')}}" method="post" enctype="multipart/form-data">
+
+        @csrf
+
+        <div class="form-group">
+            <label>Titulo</label>
+            <input type="text" name="title" class="form-control" value="{{old('title')}}">
+        </div>
+
+        <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" name="description" class="form-control" value="{{old('description')}}">
+        </div>
+
+        <div class="form-group">
+            <label>Conteúdo</label>
+            <textarea name="content" id="" cols="30" rows="10" class="form-control">{{old('content')}}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Slug</label>
+            <input type="text" name="slug" class="form-control" value="{{old('slug')}}">
+        </div>
+
+        <div class="form-group">
+            <label>Foto de Capa</label>
+            <input type="file" name="thumb">
+        </div>
+
+        <div class="form-group">
+            <label>Categorias</label>
+            <div class="row">
+                @foreach($categories  as $c)
+                    <div class="col-2 checkbox">
+                        <label>
+                            <input type="checkbox" name="categories[]" value="{{$c->id}}"> {{$c->name}}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="form-group">
+            <button class="btn btn-lg btn-success">Criar Postagem</button>
+        </div>
+    </form>
+@endsection
+```
+
+**resources/views/posts/edit.blade.php**:
+
+```
+@extends('layouts.app')
+
+@section('content')
+    <form action="{{route('posts.update', ['post' => $post->id])}}" method="post"  enctype="multipart/form-data">
+
+        @csrf
+        @method("PUT")
+
+        <div class="form-group">
+            <label>Titulo</label>
+            <input type="text" name="title" class="form-control" value="{{$post->title}}">
+        </div>
+
+        <div class="form-group">
+            <label>Descrição</label>
+            <input type="text" name="description" class="form-control" value="{{$post->description}}">
+        </div>
+
+        <div class="form-group">
+            <label>Conteúdo</label>
+            <textarea name="content" id="" cols="30" rows="10" class="form-control">{{$post->content}}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Slug</label>
+            <input type="text" name="slug" class="form-control" value="{{$post->slug}}">
+        </div>
+
+        <div class="form-group">
+            <label>Foto de Capa</label>
+            <input type="file" name="thumb">
+        </div>
+
+        <div class="form-group">
+            <label>Categorias</label>
+            <div class="row">
+                @foreach($categories  as $c)
+                    <div class="col-2 checkbox">
+                        <label>
+                            <input type="checkbox" name="categories[]" value="{{$c->id}}"
+                                @if($post->categories->contains($c)) checked @endif
+                            > {{$c->name}}
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+
+        <div class="form-group">
+            <button class="btn btn-lg btn-success">Atualizar Postagem</button>
+        </div>
+
+    </form>
+    <hr>
+    <form action="{{route('posts.destroy', ['post' => $post->id])}}" method="post">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="btn btn-lg btn-danger">Remover Post</button>
+    </form>
+@endsection
+```
+
+E nos métodos update e store vão receber o trecho abaixo, que já conhecemos com excessão do update:
+
+Trecho a ser adicionado no método `store` do `PostController`:
+
+```
+if($request->hasFile('thumb')) {
+    $data['thumb'] = $request->file('thumb')->store('thumbs', 'public');
+} else {
+    unset($data['thumb']);
+}
+```
+E no update:
+
+```
+if($request->hasFile('thumb')) {
+	//Remove a imagem atual
+	Storage::disk('public')->delete($post->thumb);
+
+	$data['thumb'] = $request->file('thumb')->store('thumbs', 'public');
+
+} else {
+	unset($data['thumb']);
+}
+```
+
+Agora basta testarmos o envio da foto da capa, tanto criando um post e depois na atualização.
+
+## Conclusões
+
+Trabalhar com upload de arquivos, em nosso caso específico fotos, é bem simples no Laravel. O Laravel já traz todo o arcabouço pronto para isto, inclusive se precisarmos subir os arquivos no S3 da Amazon.
+
+Por enquanto temos um blog com muitas opções, mas ainda não estamos validando nenhum dos dados enviados para nossos controllers, no próximo capítulo iremos aplicar estas validações e entender como funcionam dentro do Laravel.
+
+Até lá!
 
 
