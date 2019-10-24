@@ -1,6 +1,6 @@
 # Upload de Arquivos
 
-Vamos entender como funciona o upload de arquivos no Laravel, criando o upload da foto e avatar do perfil e uma capa da postagem. Primeiramente vamos entender um pouco do funcionamento geral e configurações de upload no Laravel.
+Vamos entender como funciona o upload de arquivos no Laravel, criando o upload da foto do avatar do perfil e uma capa para as postagens. Primeiramente vamos entender um pouco do funcionamento geral e configurações de upload no Laravel.
 
 ## Conhecendo Upload no Laravel
 
@@ -10,7 +10,14 @@ Primeiramente podemos recuperar um arquivo, vindo de um input do tipo `file`, us
 $avatar = $request->file('avatar');
 ```
 
-Este método irá retornar um objeto com as informações do aquivo do tipo `Illuminate\Http\UploadedFile`. Onde poderemos recuperar diversas informações como por exemplo o nome real do arquivo enviado:
+Poderíamos acessar também, da maneira abaixo:
+
+```
+$avatar = $request->avatar;
+```
+
+
+Este método irá retornar um objeto do tipo `Illuminate\Http\UploadedFile` com as informações do aquivo. Onde poderemos recuperar diversas informações, como por exemplo o nome real do arquivo enviado:
 
 ```
 $avatar->getClientOriginalName();
@@ -22,15 +29,15 @@ Ou mesmo a extensão do arquivo:
 $avatar->extension();
 ```
 
-Podemos de cara já realizar o upload  deste arquivo, sem muito esforço, simplemente chamando o método `store`:
+Podemos de cara já realizar o upload  deste arquivo, sem muito esforço, simplesmente chamando o método `store`:
 
 ```
 $path = $avatar->store('avatars');
 ```
 
-O método `store` por default pegará o caminho do drive default configurado lá no `filesystems.php` dentro da pasta `config` do projeto. E moverá a imagem para esta pasta, criando a pasta `avatars` caso não exista e o melhor de tudo, ele já manda o arquivo com um nome aplicando um hash para evitar conflitos de mesmo nome para arquivos. O caminho padrão é `storage/app`, se você quiser salvar em outro caminho precisa informar o segundo parâmetro.
+O método `store` por padrão pegará o caminho do drive default configurado lá no `filesystems.php` dentro da pasta `config` do projeto. E moverá a imagem para esta pasta padrão e ainda criando a pasta `avatars` caso não exista e o melhor de tudo, ele já manda o arquivo com um nome modificado, usando um hash para evitar conflitos de mesmo nome para arquivos. O caminho padrão é `storage/app` mas se você quiser salvar em outro caminho por disco, como é chamado a configuração, você precisa informar o segundo parâmetro.
 
-Por exemplo, onde vamos salvar as imagens será no public do storage onde futuramente linkaremos com a pasta public do projeto. O drive que representa este caminho é chamado de `public` que aponta para `storage/app/public` e se quisermos referenciar ele temos que chamar como abaixo:
+Por exemplo, vamos salvar as imagens no public do storage onde futuramente linkaremos com a pasta public do projeto. O drive que representa este caminho é chamado de `public` que aponta para `storage/app/public` e se quisermos referenciar ele, temos que chamar como abaixo:
 
 ```
 $path = $avatar->store('avatars', 'public');
@@ -42,9 +49,9 @@ O retorno do método `store` é o nome da imagem mas a pasta, por exemplo:
 avatars/loWy0OYzb5CDoyMEN1QGQ86jlyMCvJJmOfEDa5Ue.jpeg
 ```
 
-Essa referência que salvaremos na coluna do avatar por exemplo ou da imagem capa da postagem quando criarmos. Agora vamos conhecer as configurações de armazenamento do `filesystems.php`.
+Esse nome + caminho que salvaremos na coluna do avatar por exemplo. Agora vamos conhecer as configurações de armazenamento lá no `filesystems.php`.
 
-Vamos ver o conteúdo do arquivo `filesystems.php` lá da pasta `config`:
+**config/filesystems.php**:
 
 ```
 <?php
@@ -133,15 +140,15 @@ Temos também o mesmo pensamento mas para o arquivo que pode ser salvo na nuvem,
 'cloud' => env('FILESYSTEM_CLOUD', 's3'),
 ```
 
-Obs.: O Laravel já vêm praticamente pronto para que você possa realizar upload no serviço de storage da Aamazon, o S3.
+Obs.: O Laravel já vêm praticamente pronto para que você possa realizar upload no serviço de storage da Amazon, o S3.
 
-Logo, seguindo pelo arquivo, temos os discos (disks) disponíveis e configurados para armazenamento de arquivos. São eles:
+Logo, seguindo pelo arquivo, temos os discos (**disks**) disponíveis e configurados para armazenamento de arquivos. São eles:
 
-- local: pasta `app` dentro de `storage`;
-- public: pasta `app/public` dentro de storage;
-- s3: configurações do bucket S3 serão necessárias para armazenamento na nuvem.
+- **local**: pasta `app` dentro de `storage`;
+- **public**: pasta `app/public` dentro de `storage`;
+- **s3**: configurações do seu bucket `S3` serão necessárias para armazenamento na nuvem.
 
-Veja eles abaixo:
+Veja os discos abaixo:
 
 ```
 'disks' => [
@@ -170,7 +177,8 @@ Veja eles abaixo:
 ],
 
 ```
-Cada um têm o nome do driver, o caminho, url e a visibilidade, entretanto, o S3 como é um servidor e serviço remoto e privado necessita de configurações extras para que você possa realizar o upload neste disco.
+
+Cada um têm o nome do driver, o caminho, url e a visibilidade, entretanto, o S3, como é um servidor e serviço remoto e ainda privado necessita de configurações extras para que você possa realizar o upload neste disco.
 
 Conhecendo estes pontos vamos adicionar o upload de arquivos em nosso perfil do usuário e depois em posts.
 
@@ -214,17 +222,19 @@ if($request->hasFile('avatar')) {
 
 ```
 
-Primeiramente verifico se a request possui o arquivo da imagem usando o método `hasFile` e informando o nome do input, existindo, eu crio a chave `avatar` no array dentro de `$profileData` e uso os métodos `file` para recuperar a imagem enviada e o método `store` logo em seguinda. Passando o nome da pasta `avatars` e o disco `public`, que resultará em nossa imagem salva dentro de `storage/app/public/avatars`.
+Primeiramente verifico se a request possui o arquivo da imagem usando o método `hasFile` informando o nome do input, existindo, eu crio a chave `avatar` no array dentro de `$profileData` e uso os métodos `file` para recuperar a imagem enviada e o método `store` logo em seguida para upload, passando o nome da pasta `avatars` e o disco `public`, que resultará em nossa imagem salva dentro de `storage/app/public/avatars`.
 
-O retorno deste upload eu mando para a chave avatar recém criada, que ao atualizarmos o perfil receberá o nome da imagem bem como o nome da pasta `avatars` junto. Agora se formos ao nosso formulário, podemos testar o envio de uma foto para o perfil do usuário.
+O retorno deste upload eu mando para a chave avatar recém criada em `$profileData`, que ao atualizarmos o perfil receberá o nome da imagem bem como o nome da pasta `avatars` junto. Agora se formos ao nosso formulário, podemos testar o envio de uma foto para o perfil do usuário.
 
-Antes de testarmos, precisamos realizar mais uma melhoria no upload. Como vamos atualizar a foto do usuário precisamos remover a foto anterior, o arquivo no caso. Para isso precisamos usar o objeto storage para interagirmos com nossa pasta storage. Veja o trecho abaixo:
+Pera, pera!!
+
+Antes de testarmos, precisamos realizar mais uma melhoria no upload rsrsrs. Como vamos atualizar a foto do usuário precisamos remover a foto anterior, o arquivo no caso. Para isso precisamos usar o objeto storage para interagirmos com nossa pasta storage. Veja o trecho abaixo:
 
 ```
 Storage::disk('public')->delete($user->avatar);
 ```
 
-Acima seleciono o disco `public`, para onde movemos os arquivos do avatar do usuário, usando o método delete e informando o avatar do usuário removemos a foto da pasta `avatars`*.
+Acima seleciono o disco `public`, para onde movemos os arquivos do avatar do usuário. Usando o método delete e informando o avatar do usuário removemos a foto da pasta `avatars`*.
 
 *Lembra que o nome da pasta é salva junto com o nome do arquivo lá no nosso banco, na tabela do profile.
 
@@ -255,7 +265,11 @@ Para testarmos vamos exibir a foto do usuário logo ao lado do seu nome no menu 
 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
     {{auth()->user()->name}}
 
-    <img src="{{asset('storage/' . auth()->user()->profile->avatar)}}" alt="Foto de {{auth()->user()->name}}" class="rounded-circle" width="50">
+    @if(auth()->user()->profile->avatar)
+	    
+	    <img src="{{asset('storage/' . auth()->user()->profile->avatar)}}" alt="Foto de {{auth()->user()->name}}" class="rounded-circle" width="50">
+	    
+    @endif
 
     <span class="caret"></span>
 </a>
@@ -267,9 +281,9 @@ A tag img:
 ```
 <img src="{{asset('storage/' . auth()->user()->profile->avatar)}}" alt="Foto de {{auth()->user()->name}}" class="rounded-circle" width="50">
 ```
-Perceba que pego a imagem do caminho `storage` dentro do `public` do projeto e não lá de storage, concateno o valor vindo do banco para o usuário autenticado: `auth()->user()->profile->avatar`.
+Perceba que pego a imagem do caminho `storage` dentro do `public` do projeto e não lá de storage e concateno com o valor vindo do banco para o usuário autenticado: `auth()->user()->profile->avatar`.
 
-Agora como linkar o conteúdo de storage lá para o public do projeto, bem simples, o laravel têm um comando que cria este link simbolico. Execute em seu terminal o comando abaixo:
+Agora como linkar o conteúdo de storage lá para o public do projeto, bem simples, o laravel têm um comando que cria este link simbólico. Execute em seu terminal o comando abaixo:
 
 ```
 php artisan storage:link
@@ -372,11 +386,15 @@ Agora precisamos adicionar os inputs nos forms de criação e edição das posta
             <label>Slug</label>
             <input type="text" name="slug" class="form-control" value="{{old('slug')}}">
         </div>
-
+        
+        <!-- Campo Tipo File -->
+        
         <div class="form-group">
             <label>Foto de Capa</label>
             <input type="file" name="thumb">
         </div>
+        
+        <!-- Campo Tipo File -->
 
         <div class="form-group">
             <label>Categorias</label>
@@ -428,11 +446,15 @@ Agora precisamos adicionar os inputs nos forms de criação e edição das posta
             <label>Slug</label>
             <input type="text" name="slug" class="form-control" value="{{$post->slug}}">
         </div>
-
+		 
+		 <!-- Campo Tipo File -->
+		
         <div class="form-group">
             <label>Foto de Capa</label>
             <input type="file" name="thumb">
         </div>
+        
+        <!-- Campo Tipo File -->
 
         <div class="form-group">
             <label>Categorias</label>
@@ -463,7 +485,7 @@ Agora precisamos adicionar os inputs nos forms de criação e edição das posta
 @endsection
 ```
 
-E nos métodos update e store vão receber o trecho abaixo, que já conhecemos com excessão do update:
+Os métodos update e store vão receber o trecho abaixo que já conhecemos com excessão do update, o update terá a questão da imagem atual do storage:
 
 Trecho a ser adicionado no método `store` do `PostController`:
 
@@ -474,10 +496,12 @@ if($request->hasFile('thumb')) {
     unset($data['thumb']);
 }
 ```
+
 E no update:
 
 ```
 if($request->hasFile('thumb')) {
+
 	//Remove a imagem atual
 	Storage::disk('public')->delete($post->thumb);
 
@@ -486,13 +510,16 @@ if($request->hasFile('thumb')) {
 } else {
 	unset($data['thumb']);
 }
+
 ```
 
 Agora basta testarmos o envio da foto da capa, tanto criando um post e depois na atualização.
 
+No capítulo final onde criaremos o front do blog usaremos estas imagens de capa.
+
 ## Conclusões
 
-Trabalhar com upload de arquivos, em nosso caso específico fotos, é bem simples no Laravel. O Laravel já traz todo o arcabouço pronto para isto, inclusive se precisarmos subir os arquivos no S3 da Amazon.
+Trabalhar com upload de arquivos, em nosso caso específico fotos, é bem simples no Laravel. O Laravel já traz todo o arcabouço pronto para isto, inclusive se precisarmos subir os arquivos no S3 da Amazon sem muito esforço.
 
 Por enquanto temos um blog com muitas opções, mas ainda não estamos validando nenhum dos dados enviados para nossos controllers, no próximo capítulo iremos aplicar estas validações e entender como funcionam dentro do Laravel.
 
