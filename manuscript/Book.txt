@@ -8,3 +8,4 @@
 8eloquent-relacionamentos.md
 9auth.md
 10upload.md
+11validation.md
