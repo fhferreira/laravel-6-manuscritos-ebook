@@ -585,4 +585,75 @@ Acima temos o form de criação do comentário com o input hidden para o campo `
 @endif
 ```
 
+A exibição da listagem dos comentários é condicionada a existência de comentários para a postagem acessada. Para isso uso o `count` vindo da collection de comentários por meio da ligação:
 
+```
+$post->comments->count()
+```
+
+Outro ponto é a chamada do método orderBy via ligação para ordenar os comentários pelos mais recentes, dentro dos comentários da postagem acessada:
+
+```
+$post->comments()->orderBy('id', 'DESC')->get()
+```
+
+Este são dois pontos importantes a salientarmos neste ponto da listagem de comentários. Agora, vamos incluir este arquivo `comments.blade.php` dentro do arquivo `single.blade.php`.
+
+Posicionei a linha abaixo, logo após o `col-12` do conteúdo da postagem:
+
+```
+@include('site.includes.comments')
+```
+
+Veja a **single.blade.php** completa pós inclusão do arquivo de comentários:
+
+```
+@extends('layouts.site')
+
+
+@section('content')
+    <div class="row">
+        <div class="col-8">
+            <div class="col-12">
+                <h2>{{$post->title}}</h2>
+                <hr>
+            </div>
+
+            <div class="col-12">
+                @if($post->thumb)
+                    <img src="{{asset('storage/' . $post->thumb)}}" alt="" class="img-fluid" style="margin-bottom: 20px;">
+                @else
+                    <img src="{{asset('img/no-photo.jpg')}}" alt="" class="img-fluid" style="margin-bottom: 20px;">
+                @endif
+                <p>
+                    {!! $post->content !!}
+                </p>
+
+            </div>
+            @include('site.includes.comments')
+        </div>
+        <div class="col-4">
+            <div class="col-12">
+                <h2>Sidebar</h2>
+                <hr>
+            </div>
+        </div>
+    </div>
+    </div>
+@endsection
+```
+
+Um último passo é expor a rota para envio do comentário e criação. Dentro do grupo de rotas que criamos para a home e a single adicione o trecho abaixo:
+
+```
+Route::post('/post/comment', 'CommentController@saveComment')->name('single.comment');
+```
+
+Uma rota post apontando para o método `saveComment` do `CommentController`.
+
+Com isso você pode testar o envio de comentários para uma postagem. Veja como ficou a tela da postagem agora:
+
+![](resources/./images/comentario.png)
+
+
+## Postagens por Categorias
