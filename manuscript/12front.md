@@ -657,3 +657,254 @@ Com isso você pode testar o envio de comentários para uma postagem. Veja como 
 
 
 ## Postagens por Categorias
+
+Para começarmos vamos iniciar o método index para listagem das postagens por categoria. Quando inicamos o capítulo já realizamos a geração do nosso controller para este trabalho.
+
+Se mai delongas veja o método index, do CategoryController, a ser adicionado:
+
+```
+public function index($slug)
+{
+	$category = $this->category->whereSlug($slug)->first();
+	$posts = $category->posts()->paginate(15);
+
+	return view('site.category', compact('category', 'posts'));
+}
+```
+
+Primeiramente pegamos a categoria pelo slug dela e logo após buscamos as postagens desta categoria, paginei estes posts via ligação para termos nossa paginação também nesta listagem de postagens por categoria.
+
+Após isso é enviarmos os dados para nossa view, nossa view será muito parecida com a view de postagens da home o que muda aqui é que vamos exibir um título com o nome da categoria. Veja a view completa `category.blade.php` criada dentro de `resources/views/site/`:
+
+**category.blade.php**
+
+```
+@extends('layouts.site')
+
+
+@section('content')
+    <div class="row">
+        <div class="col-8">
+            <div class="col-12">
+                <h2>Categoria: {{$category->name}}</h2>
+                <hr>
+            </div>
+            @forelse($posts as $post)
+                <div class="col-12">
+                    @if($post->thumb)
+                        <img src="{{asset('storage/' . $post->thumb)}}" alt="" class="img-fluid" style="margin-bottom: 20px;">
+                    @else
+                        <img src="{{asset('img/no-photo.jpg')}}" alt="" class="img-fluid" style="margin-bottom: 20px;">
+                    @endif
+                    <h3>{{$post->title}}</h3>
+                    <p>
+                        {{$post->description}}
+                    </p>
+                    <a href="{{route('site.single', ['slug' => $post->slug])}}">Leia mais...</a>
+                    <hr>
+                </div>
+            @empty
+                <div class="alert alert-warning">Sem posts para esta categoria!</div>
+            @endforelse
+            <div class="col-12">
+                {{$posts->links()}}
+            </div>
+        </div>
+        <div class="col-4">
+            <div class="col-12">
+                <h2>Sidebar</h2>
+                <hr>
+            </div>
+        </div>
+    </div>
+    </div>
+@endsection
+```
+
+Com nossa view criada precisamos expor nossa rota para acesso desta tela. Dentro do grupo de rotas para o site/front adicione a rota abaixo:
+
+```
+Route::get('/category/{slug}', 'CategoryController@index')->name('category');
+
+```
+
+O trecho completo com as rotas do site/front estão abaixo:
+
+```
+Route::namespace('Site')->name('site.')->group(function(){
+	Route::get('/', 'HomeController@index')->name('index');
+	Route::get('/post/{slug}', 'HomeController@single')->name('single');
+
+	Route::post('/post/comment', 'CommentController@saveComment')->name('single.comment');
+
+	Route::get('/category/{slug}', 'CategoryController@index')->name('category');
+});
+
+```
+
+Agora se acessarmos o link `http://127.0.0.1:8000/category/[slug]` onde `[slug]` seja um slug de uma categoria existente conseguiremos acessar os posts por categoria. Por exemplo, tenho aqui as categorias `noticias` e `games`. Então, acessando `http://127.0.0.1:8000/category/games` tenho o resultado abaixo:
+
+![](resources/./images/cat-posts.png)
+
+E quando a categoria não possui postagens temos a tela abaixo:
+
+![](resources/./images/cat-posts-2.png)
+
+
+Agora precisamos expor os links em nossas views como você já pode ver na imagem, então vamos a isso.
+
+## Compartilhando Categorias entre as Views
+
+Exibir as categorias em cada view é um ponto que precisamos realizar entretando não podemos ficar repetindo essas buscas as categorias em todos os controllers responsavéis pelas telas do front.
+
+Para isso vamos compartilhar as categorias com todas as views de forma que sempre vai existir a variável com as categorias existentes em nosso blog.
+
+Vamos adicionar esta chamada ao provedor principal de uma aplicação Laravel, o AppServiceProvider que você pode encontrar dentro da pasta `app/Providers`. Nesta classe podemos encontrar dois métodos:
+
+- register: serve para registro de serviços para sua aplicação;
+- boot: serve para configurações de inicializações dos serviços de sua aplicação.
+
+Vamos adicionar nosso dado comum para todas as views no método `boot` do `AppServiceProvider`. Veja o método, que antes estava vazio, com o nosso conteúdo:
+
+```
+view()->share(['categories' => \App\Category::all('name', 'slug')]);
+```
+
+Aqui chamamos a função view sem parâmetros, onde recebemos um View/Factory como resultado, partir deste View/Factory podemos usar o método `share` onde podemos compartilhar parâmetros entre todas as nossas views. Neste caso seto uma chave `categories` que recebe uma busca por todas as categorias onde receberemos somente o nome e o slug de cada uma delas, estas duas informações são mais que necessárias para mostarmos nossos links.
+
+Veja o `AppServiceProvider` completo agora:
+
+```
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+    }
+
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        view()->share(['categories' => \App\Category::all('name', 'slug')]);
+    }
+}
+
+```
+
+## Exibindo categorias no menu
+
+Agora temos em todas as views a possibilidade de acessar as categorias por meio da variável `$categories`, enviado pelo método `share` visto anteriormente.
+
+Agora é só realizarmos um loop e montarmos os links lá dentro do nosso layout `site.blade.php`. Logo após do `li` do link da `home` adicione o trecho abaixo:
+
+```
+ @foreach($categories  as $category)
+<li class="nav-item">
+    <a class="nav-link" href="{{ route('site.category', ['slug' => $category->slug]) }}">{{$category->name}}</a>
+</li>
+@endforeach
+```
+
+Desta forma veremos as categorias cadastradas em nosso blog compondo os menus do nosso front. Para conferência veja o código do layout, `site.blade.php`, completo para análise:
+
+```
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Blog Code Experts</title>
+    <link rel="stylesheet" href="{{asset('css/app.css')}}">
+    <style>
+        .navbar {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="/">Laravel 6 Blog</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+                <ul class="navbar-nav">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="{{ route('site.index') }}">Home</a>
+                    </li>
+                    @foreach($categories  as $category)
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('site.category', ['slug' => $category->slug]) }}">{{$category->name}}</a>
+                    </li>
+                    @endforeach
+                </ul>
+        </div>
+
+
+        @auth
+            <ul class="navbar-nav ml-auto">
+                    <li class="nav-item dropdown">
+                        <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                            {{auth()->user()->name}}
+
+                            <img src="{{asset('storage/' . auth()->user()->profile->avatar)}}" alt="Foto de {{auth()->user()->name}}" class="rounded-circle" width="50">
+
+                            <span class="caret"></span>
+                        </a>
+
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="{{ route('logout') }}"
+                                onclick="event.preventDefault();
+                                                document.getElementById('logout-form').submit();">
+                                Sair
+                            </a>
+
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+
+                            <a class="dropdown-item" href="{{ route('profile.index') }}">
+                                Profile
+                            </a>
+                        </div>
+                    </li>
+            </ul>
+        @endauth
+    </nav>
+    <div class="container">
+        @include("flash::message")
+        @yield('content')
+    </div>
+
+    <script src="{{asset('js/app.js')}}"></script>
+</body>
+</html>
+```
+
+Com isso chegamos ao final da nossa aplicação!
+
+## Conclusões
+
+Chegamos ao ponto final da nossa aplicação planejada para este livro, um blog com painel gerenciável. Este capítulo foi bem mais fluído onde usamos dos conhecimentos já adquiridos no decorrer do livro para compormos as telas da noss aplicação.
+
+Utilizamos ainda do compartilhamento de parâmetros entre as views para entregarmos nossas categorias com todas as nossas views e utilizarmos para montagem dos links em nossas telas para a exibição das postagens por categorias.
+
+Com isso espero que todo o conhecimento adquirido aqui possa ter te ajudado imensamente para prosseguir para novos horizontes aplicando este conhecimento em seus projetos futuros e não parar a busca dos conhecimentos para melhor entrega de projetos usando o Laravel Framework.
+
+Mais uma vez obrigado! Desejo sucesso!
