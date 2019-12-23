@@ -1,8 +1,8 @@
 # Criando Front do nosso Blog
 
-Olá tudo bem? Espero que sim!
+Olá, tudo bem? Espero que sim!
 
-Chegamos ao nosso último capítulo e aqui vamos criar o front do nosso blog, com a navegação de posts, posts por categorias além de criarmos também uma área de comentários para cada postagem de nosso blog.
+Chegamos ao nosso último capítulo e aqui vamos criar o front do nosso blog. Com a navegação de posts, navegação de posts por categorias além de criarmos também uma área de comentários para cada postagem de nosso blog.
 
 E não podemos esquecer, ainda vamos dinamizar a criação dos slugs para as postagens e também para as categorias!
 
@@ -15,7 +15,7 @@ Primeiramente vamos gerar os dois controllers para nosso front:
 - HomeController: Responsável pela home e pela single da postagem;
 - CategoryController: Responsável pela listagem de posts por categorias.
 
-Irei gerar estes controllers dentro da pasta `Site`, que também será seus namespaces. Para gerarmos, já conhecemos então execute na raiz do projeto e um comando após o outro:
+Irei gerar estes controllers dentro da pasta `Site`, que também será seus namespaces. Para gerarmos, como já conhecemos, execute na raiz do projeto os comandos abaixo, um após o outro:
 
 ```
 php artisan make:controller Site/HomeController
@@ -31,7 +31,7 @@ Agora vamos focar no `HomeController` e realizar a navegação home e single das
 
 ## Listagem de Posts e Single
 
-Aqui, vamos mais nas instruções uma vez que quase tudo que veremos já vimos em outros capítulos. Iremos listar as postagens na home paginando estas postagens, além de ordená-las de forma descrecentes e ainda criar a tela da postagem ou single como costumamos chamar. 
+Iremos listar as postagens na home paginando estas postagens, além de ordená-las de forma descrecentes e ainda criar a tela da postagem ou single como costumamos chamar. 
 
 Veja o código completo do `HomeController` que possui dois métodos:
 
@@ -80,7 +80,9 @@ class HomeController extends Controller
 
 Aqui vale alguns comentários, primeiramente no método index. Antes de chamarmos o paginate do Eloquent, utilizamos o método `orderBy` para ordenarmos as postagens de forma descrecente trazendo assim as mais recentes primeiro. Reforço a simplicidade que é realizar esta operação dentro do Eloquent uma vez que o nome do métodos são muito intuitivos.
 
-No método single uso uma abordagem interesante que é chamando o `where` junto com o campo no nome do método, como está lá: `whereSlug`. O Laravel, via Eloquent vai entender que ele têm que buscar o post onde o slug seja igual o slug recebido na url via parâmetro. Isso simplifica muito a escrita de condicionais, logo após o método `whereSlug` uso o método `first` para pegar o resultado desta query e o primeiro e único resultado.
+No método single uso uma abordagem interesante que é chamando o `where` junto com o campo no nome do método, como está lá: `whereSlug`. O Laravel, via Eloquent vai entender que ele têm que buscar o post onde o slug seja igual o slug recebido na url via parâmetro. 
+
+Isso simplifica muito a escrita de condicionais em queries, e logo após o método `whereSlug` uso o método `first` para pegar o resultado desta query e o primeiro e único resultado.
 
 Abaixo segue as views na íntegra. As views estão dentro da pasta de views, na pasta `site/posts`(crie a pasta `site` e a pasta `posts` dentro da pasta `site`):
 
@@ -129,7 +131,7 @@ Abaixo segue as views na íntegra. As views estão dentro da pasta de views, na 
 
 Na view acima, `index.blade.php`, temos uma pequena condição para exibição da thumb da postagem. Caso a postagem não tenha uma thumb na base nós exibimos uma foto padrão.
 
-Você pode baixar esta foto padrão e adicionar dentro da pasta `img` dentro da pasta `public` do projeto. Se a pasta `img` não existir crie ela e jogue a imagem `no-phot.jpg` dentro. Acesse a imagem em [https://codeexperts.com.br/books/no-photo.jpg](https://codeexperts.com.br/books/no-photo.jpg).
+Você pode baixar esta foto padrão e adicionar dentro da pasta `img` dentro da pasta `public` do projeto. Se a pasta `img` não existir crie ela e jogue a imagem `no-photo.jpg` dentro. Acesse a imagem em [https://codeexperts.com.br/books/no-photo.jpg](https://codeexperts.com.br/books/no-photo.jpg).
 
 Continuando...
 
@@ -169,8 +171,10 @@ Continuando...
     </div>
 @endsection
 ```
+> Perceba a linha do `{!! $post->content !!}`, aqui uso um print diferenciado. Por padrão o print `{{}}`, do blade, escapa as entidades html para prevenção de XSS, entrentando este conteúdo da postagem pode vir com parágrafos e determinadas formatações que precisamos interpretar por isso ao invés do `{{}}` usei o `{!! !!}`.
 
-Perceba nas views que temos o template associado a elas, template esse a qual elas extendem. Neste caso crie dentro da pasta `layouts` na pasta de views o arquivo `site.blade.php` com o conteúdo abaixo:
+
+Perceba que nas views temos um template associado a elas, template esse a qual elas extendem. Neste caso crie dentro da pasta `layouts` na pasta de views o arquivo `site.blade.php` com o conteúdo abaixo:
 
 ```
 <!doctype html>
@@ -253,7 +257,7 @@ Route::namespace('Site')->name('site.')->group(function(){
 });
 
 ```
-Obs.: Comente ou remova os trechos do arquivo `web.php` mostrados abaixo para exitar conflitos de mesmo nome da rota:
+Obs.: Comente ou remova os trechos do arquivo `web.php` mostrados abaixo para evitar conflitos de mesmo nome da rota:
 
 **Rota para a tela principal vinda na geração do projeto**
 
@@ -433,7 +437,9 @@ Feita estas associações mapeando a relação entre os dois models acima estamo
 
 Aqui temos poucos campos e uma ligação com o post a qual vai pertencer o comentário. Mais conteúdo que já conhecemos. 
 
-Agora vamos criar o controller de comentários para podermos receber o post com a criação do comentário enviado pelo usuário. Gere o controller com o comando abaixo:
+Agora vamos criar o controller de comentários para podermos receber a requisição `post` para a criação do comentário enviado pelo usuário. 
+
+Gere o controller com o comando abaixo:
 
 ```
 php artisan make:controller Site/CommentController
@@ -483,9 +489,11 @@ class CommentController extends Controller
 
 Do nosso formulário enviarei dois campos, o campo `post_id` e o campo `comment`. Criamos o comentário via ligação onde buscamos o post pela referência vinda do formulário de comentários na chave `post_id`.
 
-O comentário de fato vêm na chave `comment` onde passo no array para o método `create` via ligação com post, com isso teremos o comentário criado já recebendo a referência da postagem. Perceba que habilito o status sempre como `true` mas você pode colocar como `false` e liberar no painel uma tela para o usuário gerenciar estes comentários e liberar apenas os comentários sensatos.
+O comentário de fato vêm na chave `comment` onde passo no array para o método `create`, via ligação com post. Com isso teremos o comentário criado já recebendo a referência da postagem. 
 
-Adicionei também validação para o campo do comentário, então gere o form request:
+Perceba que habilito o status sempre como `true` mas você pode colocar como `false` e liberar no painel uma tela para o usuário gerenciar estes comentários e liberar apenas os comentários sensatos.
+
+Adicione também validação para o campo do comentário, então gere o form request:
 
 ```
 php artisan make:request CommentRequest
@@ -566,7 +574,7 @@ Para exibição dos comentários bem como de seu formulário de criação separe
 @endif
 ```
 
-Acima temos o form de criação do comentário com o input hidden para o campo `post_id` e um textarea para o comentário em si. Um detalhe importante para analisarmos com calma é o trecho da listagem dos comentários, destaco ela abaixo para comentarmos:
+Acima temos o form de criação do comentário com o input hidden para o campo `post_id` e um textarea para o comentário em si. Um detalhe importante para analisarmos com calma é o trecho da listagem dos comentários, destaco ele abaixo para comentarmos:
 
 ```
 
@@ -643,7 +651,7 @@ Veja a **single.blade.php** completa pós inclusão do arquivo de comentários:
 @endsection
 ```
 
-Um último passo é expor a rota para envio do comentário e criação. Dentro do grupo de rotas que criamos para a home e a single adicione o trecho abaixo:
+Um último passo é expor a rota para envio do comentário/criação. Dentro do grupo de rotas que criamos para a home e a single adicione o trecho abaixo:
 
 ```
 Route::post('/post/comment', 'CommentController@saveComment')->name('single.comment');
@@ -658,9 +666,9 @@ Com isso você pode testar o envio de comentários para uma postagem. Veja como 
 
 ## Postagens por Categorias
 
-Para começarmos vamos iniciar o método index para listagem das postagens por categoria. Quando inicamos o capítulo já realizamos a geração do nosso controller para este trabalho.
+Para começarmos vamos iniciar o método index para listagem das postagens por categoria. Quando inicamos o capítulo já realizamos a geração do nosso controller para este trabalho, o `CategoryController`.
 
-Se mai delongas veja o método index, do CategoryController, a ser adicionado:
+Sem mais delongas veja o método `index`, do `CategoryController`, a ser adicionado:
 
 ```
 public function index($slug)
@@ -674,7 +682,7 @@ public function index($slug)
 
 Primeiramente pegamos a categoria pelo slug dela e logo após buscamos as postagens desta categoria, paginei estes posts via ligação para termos nossa paginação também nesta listagem de postagens por categoria.
 
-Após isso é enviarmos os dados para nossa view, nossa view será muito parecida com a view de postagens da home o que muda aqui é que vamos exibir um título com o nome da categoria. Veja a view completa `category.blade.php` criada dentro de `resources/views/site/`:
+Agora precisamos enviar os dados para nossa view, nossa view será muito parecida com a view de postagens da home o que muda é que vamos exibir um título com o nome da categoria. Veja a view completa `category.blade.php` criada dentro de `resources/views/site/`:
 
 **category.blade.php**
 
@@ -742,7 +750,7 @@ Route::namespace('Site')->name('site.')->group(function(){
 
 ```
 
-Agora se acessarmos o link `http://127.0.0.1:8000/category/[slug]` onde `[slug]` seja um slug de uma categoria existente conseguiremos acessar os posts por categoria. Por exemplo, tenho aqui as categorias `noticias` e `games`. Então, acessando `http://127.0.0.1:8000/category/games` tenho o resultado abaixo:
+Agora se acessarmos o link `http://127.0.0.1:8000/category/[slug]` onde `[slug]` seja um slug de uma categoria existente, conseguiremos acessar os posts por categoria. Por exemplo, tenho aqui as categorias `noticias` e `games`. Então, acessando `http://127.0.0.1:8000/category/games` tenho o resultado abaixo:
 
 ![](resources/./images/cat-posts.png)
 
@@ -751,26 +759,28 @@ E quando a categoria não possui postagens temos a tela abaixo:
 ![](resources/./images/cat-posts-2.png)
 
 
-Agora precisamos expor os links em nossas views como você já pode ver na imagem, então vamos a isso.
+Agora precisamos expor os links das categorias em nosso menu como você já pode ver na imagem acima, então vamos a isso.
 
 ## Compartilhando Categorias entre as Views
 
-Exibir as categorias em cada view é um ponto que precisamos realizar entretando não podemos ficar repetindo essas buscas as categorias em todos os controllers responsavéis pelas telas do front.
+Exibir as categorias em cada view é um ponto que precisamos realizar,   entretanto, não podemos ficar repetindo essas buscas em todos os controllers responsavéis pelas telas do front.
 
-Para isso vamos compartilhar as categorias com todas as views de forma que sempre vai existir a variável com as categorias existentes em nosso blog.
+Para isso vamos compartilhar as categorias com todas as views de forma a sempre existir a variável com as categorias existentes em nosso blog.
 
-Vamos adicionar esta chamada ao provedor principal de uma aplicação Laravel, o AppServiceProvider que você pode encontrar dentro da pasta `app/Providers`. Nesta classe podemos encontrar dois métodos:
+Vamos adicionar esta chamada ao provedor principal de uma aplicação Laravel, o `AppServiceProvider` que você pode encontrar dentro da pasta `app/Providers`. Nesta classe podemos encontrar dois métodos:
 
 - register: serve para registro de serviços para sua aplicação;
-- boot: serve para configurações de inicializações dos serviços de sua aplicação.
+- boot: serve para configurações de inicialização dos serviços de sua aplicação.
 
-Vamos adicionar nosso dado comum para todas as views no método `boot` do `AppServiceProvider`. Veja o método, que antes estava vazio, com o nosso conteúdo:
+Vamos adicionar nosso dado comum para todas as views no método `boot` do `AppServiceProvider`. Dentro do método `boot` adicione a seguinte linha abaixo:
 
 ```
 view()->share(['categories' => \App\Category::all('name', 'slug')]);
 ```
 
-Aqui chamamos a função view sem parâmetros, onde recebemos um View/Factory como resultado, partir deste View/Factory podemos usar o método `share` onde podemos compartilhar parâmetros entre todas as nossas views. Neste caso seto uma chave `categories` que recebe uma busca por todas as categorias onde receberemos somente o nome e o slug de cada uma delas, estas duas informações são mais que necessárias para mostarmos nossos links.
+Aqui chamamos a função view sem parâmetros, onde recebemos um `View/Factory` como resultado, partir deste `View/Factory` podemos usar o método `share` que nos permite compartilhar parâmetros entre todas as nossas views. 
+
+Onde seto uma chave `categories` que recebe uma busca por todas as categorias do nosso blog. De cada categoria pegarei apenas o nome e o slug de cada uma delas, estas duas informações são mais que necessárias para montarmos nossos links.
 
 Veja o `AppServiceProvider` completo agora:
 
@@ -819,7 +829,7 @@ Agora é só realizarmos um loop e montarmos os links lá dentro do nosso layout
 @endforeach
 ```
 
-Desta forma veremos as categorias cadastradas em nosso blog compondo os menus do nosso front. Para conferência veja o código do layout, `site.blade.php`, completo para análise:
+Desta forma veremos as categorias cadastradas em nosso blog compondo o menu principal do nosso front. Para conferência veja o código do layout, `site.blade.php`, completo para análise:
 
 ```
 <!doctype html>
@@ -899,12 +909,131 @@ Desta forma veremos as categorias cadastradas em nosso blog compondo os menus do
 
 Com isso chegamos ao final da nossa aplicação!
 
+Antes de concluirmos precisamos dinamizar os slugs de nossas postagens e das nossas categorias.
+
+## Dinamizando Geração de Slugs Post & Category
+
+Para dinamizar a geração de slugs em meus projetos Laravel eu costumo usar um pacote chamado de `spatie/laravel-sluggable`. Então na raiz do seu projeto execute o comando abaixo:
+
+```
+composer require spatie/laravel-sluggable
+```
+
+![](resources/./images/slug.png)
+
+O interessante deste pacote é que ele evita o conflito de slugs e existindo o slug em questão ele incrementa evitando, assim, este conflito. Após a instalação precisamos dizer em nossos models, qual a coluna o pacote deve lê para gerar o slug e onde ele deve salvar este slug.
+
+Veja o trecho que adicionaremos em nossos models para este trabalho:
+
+```
+public function getSlugOptions() : SlugOptions
+{
+    return SlugOptions::create()
+        ->generateSlugsFrom('name')
+        ->saveSlugsTo('slug');
+}
+```
+
+Este método vêm da trait `HasSlug`, que adicionaremos, e diz exatamente que o nosso slug deve ser gerado a partir da coluna `name` (método `generateSlugsFrom`) e deve ser salvo na coluna `slug` (método `saveSlugsTo`).
+
+Os dois imports vêm do namespace `Spatie\Sluggable`, de pegaremos a trait `HasSlug` e o `SlugOptions`. Por exemplo:
+
+```
+use Spatie\Sluggable\{SlugOptions, HasSlug};
+```
+
+Isso realmente é bem simples, veja nossos dois models completos com as aplicações mencionados acima.
+
+**Post.php**:
+
+```
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Sluggable\{SlugOptions, HasSlug};
+
+class Post extends Model
+{
+	use HasSlug;
+
+    protected $fillable = [
+		'title',
+	    'description',
+	    'content',
+	    'slug',
+	    'is_active',
+	    'user_id',
+	    'thumb'
+    ];
+
+	public function getSlugOptions() : SlugOptions
+	{
+		return SlugOptions::create()
+		                  ->generateSlugsFrom('title')
+		                  ->saveSlugsTo('slug');
+	}
+
+	public function user()
+	{
+		return $this->belongsTo(User::class);
+	}
+
+	public function categories()
+	{
+		return $this->belongsToMany(Category::class, 'posts_categories');
+	}
+
+	public function comments()
+	{
+		return $this->hasMany(Comment::class);
+	}
+}
+
+```
+
+**Category.php**:
+
+```
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+use Spatie\Sluggable\{SlugOptions, HasSlug};
+
+class Category extends Model
+{
+	use HasSlug;
+
+	protected $fillable = ['name', 'description', 'slug'];
+
+	public function getSlugOptions() : SlugOptions
+	{
+		return SlugOptions::create()
+		                  ->generateSlugsFrom('name')
+		                  ->saveSlugsTo('slug');
+	}
+
+	public function posts()
+	{
+		return $this->belongsToMany(Post::class, 'posts_categories');
+	}
+}
+
+```
+
+Agora é testar! E você já pode remover os campos `slug` dos formulários de criação e edição de posts e categorias, pois a geração já está automatizada. Agora, mesmo que tenha categoria com o mesmo nome ou postagem com o mesmo título, os slugs gerados não gerarão duplicidades e serão sempre únicos.
+
+Com isso, concluímos de fato nosso projeto! Vamos as conclusões!
+
 ## Conclusões
 
-Chegamos ao ponto final da nossa aplicação planejada para este livro, um blog com painel gerenciável. Este capítulo foi bem mais fluído onde usamos dos conhecimentos já adquiridos no decorrer do livro para compormos as telas da noss aplicação.
+Chegamos ao ponto final da nossa aplicação planejada para este livro, um blog com painel gerenciável. Este capítulo foi bem mais fluído onde usamos dos conhecimentos já adquiridos no decorrer do livro para compormos as telas da nossa aplicação na visão pública.
 
 Utilizamos ainda do compartilhamento de parâmetros entre as views para entregarmos nossas categorias com todas as nossas views e utilizarmos para montagem dos links em nossas telas para a exibição das postagens por categorias.
 
-Com isso espero que todo o conhecimento adquirido aqui possa ter te ajudado imensamente para prosseguir para novos horizontes aplicando este conhecimento em seus projetos futuros e não parar a busca dos conhecimentos para melhor entrega de projetos usando o Laravel Framework.
+Com isso espero que todo o conhecimento adquirido aqui possa ter te ajudado imensamente para prosseguir para novos horizontes aplicando este conhecimento em seus projetos futuros, e claro, não parar a busca dos conhecimentos para melhor entrega de projetos usando o Laravel Framework.
 
-Mais uma vez obrigado! Desejo sucesso!
+Mais uma vez obrigado! E meus sinceros desejo de sucesso! Felicidades!

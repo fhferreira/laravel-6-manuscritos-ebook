@@ -4,4 +4,4 @@ Bom, serei breve aqui. Escrevi este livro para os programadores PHP e entusiasta
 
 É claro que se você apenas começou com PHP recomendo fortemente a continuar estudando as bases da linguagem e busque materiais sobre Orientação a Objetos pois estes conhecimentos irão te adicionar uma excelente base para entender todos os conceitos abordados, não somente no Laravel, mas em frameworks PHP modernos.
 
-Se você está pronto para a jornada, então vamos lá!
+Se você está pronto para a jornada, então conte comigo e vamos lá!
