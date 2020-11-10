@@ -4,4 +4,4 @@ Arquivos para geração do nosso ebook sobre Laravel 6. Fique a vontade para exp
 
 *Ebook free forever!*
 
-Pegue a versão pdf no [http://leanpub.com/laravel-6](leanpub)
+Pegue a versão pdf no [leanpub](http://leanpub.com/laravel-6)
